@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
-RUN dotnet restore PlaySlot.sln
+RUN dotnet restore PlaySlot.API/PlaySlot.API.csproj
 RUN dotnet publish PlaySlot.API/PlaySlot.API.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0

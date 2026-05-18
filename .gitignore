@@ -24,3 +24,9 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln.docstates
+
+# Claude Code
+.claude/
+
+# Planning artifacts
+PLAN.md
