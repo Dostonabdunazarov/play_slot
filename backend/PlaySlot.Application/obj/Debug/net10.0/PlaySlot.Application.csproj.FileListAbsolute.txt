@@ -1,0 +1,16 @@
+D:\play_slot\backend\PlaySlot.Application\bin\Debug\net10.0\PlaySlot.Application.deps.json
+D:\play_slot\backend\PlaySlot.Application\bin\Debug\net10.0\PlaySlot.Application.dll
+D:\play_slot\backend\PlaySlot.Application\bin\Debug\net10.0\PlaySlot.Application.pdb
+D:\play_slot\backend\PlaySlot.Application\bin\Debug\net10.0\PlaySlot.Domain.dll
+D:\play_slot\backend\PlaySlot.Application\bin\Debug\net10.0\PlaySlot.Domain.pdb
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.csproj.AssemblyReference.cache
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.AssemblyInfoInputs.cache
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.AssemblyInfo.cs
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.csproj.CoreCompileInputs.cache
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.sourcelink.json
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.3F1995E5.Up2Date
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.dll
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\refint\PlaySlot.Application.dll
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\PlaySlot.Application.pdb
+D:\play_slot\backend\PlaySlot.Application\obj\Debug\net10.0\ref\PlaySlot.Application.dll

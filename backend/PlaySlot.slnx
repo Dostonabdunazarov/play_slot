@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="PlaySlot.API/PlaySlot.API.csproj" />
+  <Project Path="PlaySlot.Application/PlaySlot.Application.csproj" />
+  <Project Path="PlaySlot.Domain/PlaySlot.Domain.csproj" />
+  <Project Path="PlaySlot.Infrastructure/PlaySlot.Infrastructure.csproj" />
+</Solution>
