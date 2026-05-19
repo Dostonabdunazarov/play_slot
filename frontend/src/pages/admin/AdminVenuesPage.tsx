@@ -9,7 +9,7 @@ import type { Venue, CreateVenueRequest } from '../../types'
 
 const EMPTY: CreateVenueRequest = {
   name: '', address: '', phone: '', description: '', imageUrl: '',
-  pricePerHour: 0, openTime: '08:00:00', closeTime: '22:00:00',
+  pricePerHour: 0, openTime: '08:00:00', closeTime: '22:00:00', isActive: true,
 }
 
 function VenueModal({
@@ -228,6 +228,7 @@ export default function AdminVenuesPage() {
             pricePerHour: modal.venue.pricePerHour,
             openTime: modal.venue.openTime,
             closeTime: modal.venue.closeTime,
+            isActive: modal.venue.isActive,
           } : EMPTY}
           onClose={() => setModal({ open: false, venue: null })}
           onSave={handleSave}

@@ -63,6 +63,7 @@ export interface CreateVenueRequest {
   pricePerHour: number
   openTime: string
   closeTime: string
+  isActive?: boolean
 }
 
 export interface CreateBookingRequest {
