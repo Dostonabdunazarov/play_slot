@@ -1,0 +1,16 @@
+# Держим build-контекст маленьким и чистым.
+node_modules
+dist
+.vite
+*.log
+.env
+.env.*
+!.env.example
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+Dockerfile
+.dockerignore
+railway.toml
+README.md

@@ -1,0 +1,35 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-play_slot
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -e
+            cd /root/play_slot
+            git fetch origin main
+            git reset --hard origin/main
+            # Общая сеть общего прокси Caddy (idempotent). Сам Caddy поднимает corpdev.
+            docker network inspect proxy >/dev/null 2>&1 || docker network create proxy
+            # Сборка и запуск play_slot (прод-оверлей: без публичных портов, сеть proxy).
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+            # Перечитать Caddyfile (маршрут play.hypex.site живёт в corpdev/infra).
+            docker compose -f /root/corpdev/infra/docker-compose.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+            docker image prune -f

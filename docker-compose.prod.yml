@@ -1,0 +1,44 @@
+# Прод-оверлей для play.hypex.site. Накладывается поверх docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Что делает:
+#  • подключает backend и frontend к внешней сети `proxy` (там же живёт Caddy);
+#  • переводит backend в Production;
+#  • секреты (POSTGRES_PASSWORD, JWT_KEY) берёт из .env рядом с этим файлом.
+#
+# Публичные порты из базового compose привязаны к 127.0.0.1 (loopback), поэтому
+# снаружи недоступны и здесь их не трогаем — Compose всё равно не даёт «очистить»
+# список портов оверлеем. Наружу торчит только Caddy из corpdev/infra.
+#
+# Маршрутизацию делает Caddy: /api/* → backend:8080, всё остальное → frontend:80.
+services:
+  db:
+    container_name: playslot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  backend:
+    image: playslot-backend:latest
+    container_name: playslot-backend
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__Default: "Host=db;Database=playslot;Username=postgres;Password=${POSTGRES_PASSWORD}"
+      Jwt__Key: ${JWT_KEY}
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+    networks:
+      - default
+      - proxy
+
+  frontend:
+    image: playslot-frontend:latest
+    container_name: playslot-frontend
+    restart: unless-stopped
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true

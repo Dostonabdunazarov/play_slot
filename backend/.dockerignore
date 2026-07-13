@@ -1,0 +1,13 @@
+# Держим build-контекст маленьким и чистым.
+**/bin/
+**/obj/
+**/*.user
+.env
+.env.*
+!.env.example
+.vs/
+.vscode/
+.idea/
+Dockerfile
+.dockerignore
+railway.toml

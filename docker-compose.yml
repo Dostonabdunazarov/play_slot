@@ -1,11 +1,21 @@
+# Базовый compose — удобен для локальной разработки: порты открыты только на
+# localhost (db:5432, backend:5000, frontend:3000), секреты имеют dev-значения.
+#
+# ВАЖНО: порты привязаны к 127.0.0.1 намеренно. Списки в Compose override-ами
+# не «очищаются» (ports: [] в оверлее не убирает базовые), поэтому на проде они
+# остаются, но торчат только в loopback — снаружи недоступны, а Caddy ходит к
+# контейнерам через сеть `proxy`, а не через порты хоста.
+#
+# На сервере поверх накладывается docker-compose.prod.yml (см. DEPLOY.md):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 services:
   db:
     image: postgres:16
     environment:
       POSTGRES_DB: playslot
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports: ["5432:5432"]
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports: ["127.0.0.1:5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d playslot"]
@@ -15,10 +25,10 @@ services:
 
   backend:
     build: ./backend
-    ports: ["5000:8080"]
+    ports: ["127.0.0.1:5000:8080"]
     environment:
-      ConnectionStrings__Default: "Host=db;Database=playslot;Username=postgres;Password=postgres"
-      Jwt__Key: "super-secret-key-32chars-minimum!"
+      ConnectionStrings__Default: "Host=db;Database=playslot;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}"
+      Jwt__Key: ${JWT_KEY:-super-secret-key-32chars-minimum!}
       Jwt__Issuer: "PlaySlot"
       Jwt__Audience: "PlaySlot"
       ASPNETCORE_ENVIRONMENT: "Development"
@@ -28,7 +38,7 @@ services:
 
   frontend:
     build: ./frontend
-    ports: ["3000:80"]
+    ports: ["127.0.0.1:3000:80"]
     depends_on: [backend]
 
 volumes:
