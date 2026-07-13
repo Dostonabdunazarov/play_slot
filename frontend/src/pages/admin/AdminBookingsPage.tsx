@@ -126,11 +126,19 @@ export default function AdminBookingsPage() {
     onError: () => toast.error(t('common.error')),
   })
 
-  const filtered = bookings.filter((b) => {
-    if (filterVenue && b.venueId !== filterVenue) return false
-    if (filterDate && b.date !== filterDate) return false
-    return true
-  })
+  const filtered = bookings
+    .filter((b) => {
+      if (filterVenue && b.venueId !== filterVenue) return false
+      if (filterDate && b.date !== filterDate) return false
+      return true
+    })
+    // Sort by booking date + start time (most recent first).
+    .sort((a, b) =>
+      `${b.date}T${b.startTime}`.localeCompare(`${a.date}T${a.startTime}`)
+    )
+
+  // A booking is past once its end time (date + endTime) is before now.
+  const isPast = (b: Booking) => new Date(`${b.date}T${b.endTime}`).getTime() < Date.now()
 
   if (isLoading) return <div className="text-center py-20 text-gray-500">{t('common.loading')}</div>
 
@@ -168,11 +176,13 @@ export default function AdminBookingsPage() {
         <div className="text-center py-20 text-gray-500">{t('bookings.noBookings')}</div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((booking) => (
+          {filtered.map((booking) => {
+            const past = booking.status === 'Active' && isPast(booking)
+            return (
             <div
               key={booking.id}
               className={`bg-white rounded-xl shadow-sm border p-4 ${
-                booking.status === 'Cancelled' ? 'border-gray-100 opacity-60' : 'border-gray-100'
+                booking.status === 'Cancelled' || past ? 'border-gray-100 opacity-60' : 'border-gray-100'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -183,6 +193,11 @@ export default function AdminBookingsPage() {
                     {booking.status === 'Cancelled' && (
                       <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
                         {t('bookings.statuses.cancelled')}
+                      </span>
+                    )}
+                    {past && (
+                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                        {t('bookings.past')}
                       </span>
                     )}
                   </div>
@@ -205,7 +220,7 @@ export default function AdminBookingsPage() {
                   {booking.notes && <p className="mt-1.5 text-xs text-gray-400 italic">"{booking.notes}"</p>}
                 </div>
 
-                {booking.status === 'Active' && (
+                {booking.status === 'Active' && !past && (
                   <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => setPaymentModal(booking)}
@@ -224,7 +239,8 @@ export default function AdminBookingsPage() {
                 )}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

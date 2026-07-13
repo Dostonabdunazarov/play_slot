@@ -78,6 +78,7 @@ export default {
     callToBook: 'звоните, чтобы забронировать:',
     free: 'Свободно',
     booked: 'Занято',
+    past: 'Прошло',
     noBookings: 'Брони не найдены',
     cancelBooking: 'Отменить бронь',
     cancelConfirm: 'Вы уверены, что хотите отменить эту бронь?',

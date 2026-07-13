@@ -15,6 +15,24 @@ namespace PlaySlot.API.Controllers;
 [Authorize]
 public class BookingsController(AppDbContext db, INotificationService notifications) : ControllerBase
 {
+    // The business operates in Uzbekistan (UTC+5). IANA id works on Linux/macOS
+    // and modern Windows; fall back to a fixed +5 offset if the tz db is absent.
+    private static readonly TimeZoneInfo Tz = ResolveTashkentTz();
+
+    private static TimeZoneInfo ResolveTashkentTz()
+    {
+        foreach (var id in new[] { "Asia/Tashkent", "Uzbekistan Standard Time" })
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+            catch (TimeZoneNotFoundException) { }
+            catch (InvalidTimeZoneException) { }
+        }
+        return TimeZoneInfo.CreateCustomTimeZone("UZT", TimeSpan.FromHours(5), "Uzbekistan Time", "UZT");
+    }
+
+    private static DateTime NowInTashkent() =>
+        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Tz);
+
     private static BookingDto ToDto(Booking b) =>
         new(b.Id, b.VenueId, b.Venue.Name, b.UserId,
             b.User?.FullName ?? "",
@@ -95,6 +113,12 @@ public class BookingsController(AppDbContext db, INotificationService notificati
             return BadRequest(new { message = "Venue not found or inactive" });
 
         var endTime = request.StartTime.AddHours(1);
+
+        // Reject slots that start in the past. The business runs in Uzbekistan
+        // (UTC+5), so compare against "now" in that timezone, not UTC.
+        var slotStart = request.Date.ToDateTime(request.StartTime);
+        if (slotStart < NowInTashkent())
+            return BadRequest(new { message = "Cannot book a time slot in the past" });
 
         var conflict = await db.Bookings.AnyAsync(b =>
             b.VenueId == request.VenueId &&

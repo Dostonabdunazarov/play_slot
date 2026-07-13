@@ -78,6 +78,7 @@ export default {
     callToBook: "bron qilish uchun qo'ng'iroq qiling:",
     free: 'Bo\'sh',
     booked: 'Band',
+    past: "O'tgan",
     noBookings: 'Bronlar topilmadi',
     cancelBooking: 'Bronni bekor qilish',
     cancelConfirm: 'Siz ushbu bronni bekor qilishni istaysizmi?',

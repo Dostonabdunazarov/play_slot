@@ -61,6 +61,12 @@ export default function VenueDetailPage() {
   const closeHour = parseInt(venue.closeTime.substring(0, 2))
   const hours = Array.from({ length: closeHour - openHour }, (_, i) => openHour + i)
 
+  // A slot is in the past if its start (selectedDate + hour) is before now.
+  const isPastHour = (hour: number) => {
+    const slot = new Date(`${selectedDate}T${String(hour).padStart(2, '0')}:00:00`)
+    return slot.getTime() < Date.now()
+  }
+
   const bookingByHour = new Map<number, Booking>()
   bookings.forEach((b) => {
     if (b.status === 'Active') {
@@ -172,6 +178,11 @@ export default function VenueDetailPage() {
                         <span className="text-white text-xs font-medium">{t('bookings.booked')}</span>
                       </div>
                     )
+                  ) : isPastHour(hour) ? (
+                    // Past slots can't be booked.
+                    <div className="w-full h-10 rounded-lg bg-gray-50 border border-dashed border-gray-100 flex items-center px-3 text-xs text-gray-300">
+                      {t('bookings.past')}
+                    </div>
                   ) : loggedIn ? (
                     <button
                       onClick={() =>
