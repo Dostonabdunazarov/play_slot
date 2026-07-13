@@ -184,7 +184,7 @@ export default function AdminBookingsPage() {
             <div
               key={booking.id}
               className={`bg-white rounded-xl shadow-sm border p-4 ${
-                booking.status === 'Cancelled' || past ? 'border-gray-100 opacity-60' : 'border-gray-100'
+                booking.status === 'Cancelled' ? 'border-gray-100 opacity-60' : 'border-gray-100'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -222,14 +222,17 @@ export default function AdminBookingsPage() {
                   {booking.notes && <p className="mt-1.5 text-xs text-gray-400 italic">"{booking.notes}"</p>}
                 </div>
 
-                {booking.status === 'Active' && !past && (
+                {booking.status === 'Active' && (
                   <div className="flex gap-2 flex-shrink-0">
+                    {/* Payment stays editable even for past bookings (paid later). */}
                     <button
                       onClick={() => setPaymentModal(booking)}
                       className="text-xs text-green-700 hover:text-green-900 border border-green-200 hover:border-green-400 px-3 py-1 rounded-lg transition-colors"
                     >
                       {t('bookings.updatePayment')}
                     </button>
+                    {/* Cancelling a slot that already passed makes no sense. */}
+                    {!past && (
                     <button
                       onClick={() => { if (confirm(t('bookings.cancelConfirm'))) cancelMutation.mutate(booking.id) }}
                       disabled={cancelMutation.isPending}
@@ -237,6 +240,7 @@ export default function AdminBookingsPage() {
                     >
                       {t('bookings.cancelBooking')}
                     </button>
+                    )}
                   </div>
                 )}
               </div>
