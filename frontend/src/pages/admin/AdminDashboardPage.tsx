@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { TrendingUp, CalendarCheck, Wallet, AlertCircle } from 'lucide-react'
 import { getDashboardStats } from '../../api/stats'
-import { formatMoney, formatDayShort } from '../../utils/format'
+import { formatMoney } from '../../utils/format'
 import type { DashboardStats } from '../../types'
 
-// A quick date range shortcut in days back from today.
-const RANGES = [7, 30, 90] as const
+// A quick date range shortcut in days back from today. 0 = today only.
+const RANGES = [0, 7, 30, 90] as const
 
 function isoDaysAgo(days: number): string {
   const d = new Date()
@@ -20,55 +21,35 @@ function StatCard({
   label,
   value,
   accent,
+  to,
 }: {
   icon: React.ReactNode
   label: string
   value: string
   accent: string
+  to?: string
 }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${accent}`}>{icon}</div>
-        <div className="min-w-0">
-          <div className="text-xs text-gray-500">{label}</div>
-          <div className="text-lg font-bold text-gray-900 truncate">{value}</div>
-        </div>
+  const content = (
+    <div className="flex items-center gap-3">
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${accent}`}>{icon}</div>
+      <div className="min-w-0">
+        <div className="text-xs text-gray-500">{label}</div>
+        <div className="text-lg font-bold text-gray-900 truncate">{value}</div>
       </div>
     </div>
   )
-}
 
-function BarChart({
-  data,
-  color,
-  valueFmt,
-}: {
-  data: { label: string; value: number }[]
-  color: string
-  valueFmt: (v: number) => string
-}) {
-  const { t } = useTranslation()
-  const max = Math.max(1, ...data.map((d) => d.value))
-  if (!data.length) return <div className="text-sm text-gray-400 py-8 text-center">{t('common.noData')}</div>
+  const base = 'bg-white rounded-xl shadow-sm border border-gray-100 p-4'
 
-  return (
-    <div className="flex items-end gap-1 h-48 overflow-x-auto pb-1">
-      {data.map((d, i) => (
-        <div key={i} className="flex flex-col items-center justify-end flex-1 min-w-[24px] group h-full">
-          <div className="text-[10px] text-gray-500 mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            {valueFmt(d.value)}
-          </div>
-          <div
-            className={`w-full rounded-t ${color} transition-all`}
-            style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value > 0 ? '2px' : '0' }}
-            title={`${d.label}: ${valueFmt(d.value)}`}
-          />
-          <div className="text-[9px] text-gray-400 mt-1 rotate-0 whitespace-nowrap">{d.label}</div>
-        </div>
-      ))}
-    </div>
-  )
+  if (to) {
+    return (
+      <Link to={to} className={`${base} block hover:shadow-md hover:border-gray-200 transition-shadow`}>
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className={base}>{content}</div>
 }
 
 export default function AdminDashboardPage() {
@@ -99,7 +80,7 @@ export default function AdminDashboardPage() {
                 rangeDays === r ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t('dashboard.lastDays', { count: r })}
+              {r === 0 ? t('dashboard.today') : t('dashboard.lastDays', { count: r })}
             </button>
           ))}
         </div>
@@ -124,6 +105,7 @@ export default function AdminDashboardPage() {
           accent="bg-violet-100"
           label={t('dashboard.activeBookings')}
           value={`${stats.activeBookings}`}
+          to="/admin/bookings"
         />
         <StatCard
           icon={<AlertCircle className="w-5 h-5 text-orange-700" />}
@@ -133,30 +115,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Revenue by day */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-        <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.revenueByDay')}</h2>
-        <BarChart
-          data={stats.revenueByDay.map((p) => ({ label: formatDayShort(p.date), value: p.paidRevenue }))}
-          color="bg-green-500"
-          valueFmt={formatMoney}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Peak hours */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.peakHours')}</h2>
-          <BarChart
-            data={stats.bookingsByHour.map((h) => ({
-              label: `${h.hour}:00`,
-              value: h.bookings,
-            }))}
-            color="bg-orange-400"
-            valueFmt={(v) => `${v}`}
-          />
-        </div>
-
+      <div className="grid grid-cols-1 gap-6">
         {/* Venue load */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.venueLoad')}</h2>
@@ -170,7 +129,8 @@ export default function AdminDashboardPage() {
                     <th className="py-2 pr-2 font-medium">{t('bookings.venue')}</th>
                     <th className="py-2 px-2 font-medium text-right">{t('dashboard.bookingsCount')}</th>
                     <th className="py-2 px-2 font-medium text-right">{t('dashboard.hoursBooked')}</th>
-                    <th className="py-2 pl-2 font-medium text-right">{t('dashboard.paidRevenue')}</th>
+                    <th className="py-2 px-2 font-medium text-right">{t('dashboard.paidRevenue')}</th>
+                    <th className="py-2 pl-2 font-medium text-right">{t('dashboard.outstanding')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -179,7 +139,8 @@ export default function AdminDashboardPage() {
                       <td className="py-2 pr-2 text-gray-800 font-medium">{v.venueName}</td>
                       <td className="py-2 px-2 text-right text-gray-600">{v.bookings}</td>
                       <td className="py-2 px-2 text-right text-gray-600">{v.hoursBooked}</td>
-                      <td className="py-2 pl-2 text-right text-green-700 font-medium">{formatMoney(v.paidRevenue)}</td>
+                      <td className="py-2 px-2 text-right text-green-700 font-medium">{formatMoney(v.paidRevenue)}</td>
+                      <td className={`py-2 pl-2 text-right font-medium ${v.outstandingAmount > 0 ? 'text-orange-600' : 'text-gray-400'}`}>{formatMoney(v.outstandingAmount)}</td>
                     </tr>
                   ))}
                 </tbody>

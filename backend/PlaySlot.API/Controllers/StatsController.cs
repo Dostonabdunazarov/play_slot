@@ -37,12 +37,6 @@ public class StatsController(AppDbContext db) : ControllerBase
         var paidRevenue = active.Sum(Paid);
         var expectedRevenue = active.Sum(b => b.TotalAmount);
 
-        var revenueByDay = active
-            .GroupBy(b => b.Date)
-            .Select(g => new RevenuePointDto(g.Key, g.Sum(Paid), g.Count()))
-            .OrderBy(p => p.Date)
-            .ToList();
-
         var venueLoad = active
             .GroupBy(b => new { b.VenueId, b.Venue.Name })
             .Select(g => new VenueLoadDto(
@@ -50,14 +44,9 @@ public class StatsController(AppDbContext db) : ControllerBase
                 g.Key.Name,
                 g.Count(),
                 g.Sum(b => (int)Math.Round((b.EndTime - b.StartTime).TotalHours)),
-                g.Sum(Paid)))
+                g.Sum(Paid),
+                g.Sum(b => b.TotalAmount) - g.Sum(Paid)))
             .OrderByDescending(v => v.PaidRevenue)
-            .ToList();
-
-        var bookingsByHour = active
-            .GroupBy(b => b.StartTime.Hour)
-            .Select(g => new HourLoadDto(g.Key, g.Count()))
-            .OrderBy(h => h.Hour)
             .ToList();
 
         var dto = new DashboardStatsDto(
@@ -70,9 +59,7 @@ public class StatsController(AppDbContext db) : ControllerBase
             ActiveBookings: active.Count,
             CancelledBookings: bookings.Count(b => b.Status == BookingStatus.Cancelled),
             UnpaidCount: active.Count(b => b.PaymentStatus == PaymentStatus.Unpaid),
-            RevenueByDay: revenueByDay,
-            VenueLoad: venueLoad,
-            BookingsByHour: bookingsByHour);
+            VenueLoad: venueLoad);
 
         return Ok(dto);
     }

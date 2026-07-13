@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, X, User } from 'lucide-react'
+import { Plus, Trash2, X, User, Eye, EyeOff } from 'lucide-react'
 import { phoneLink } from '../../utils/format'
 import { getUsers, createUser, deleteUser } from '../../api/users'
 import type { CreateUserRequest, Role } from '../../types'
@@ -20,6 +20,7 @@ function CreateUserModal({
 }) {
   const { t } = useTranslation()
   const [form, setForm] = useState<CreateUserRequest>(EMPTY)
+  const [showPassword, setShowPassword] = useState(false)
 
   function set<K extends keyof CreateUserRequest>(field: K, value: CreateUserRequest[K]) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -32,24 +33,49 @@ function CreateUserModal({
           <h2 className="font-semibold">{t('users.addUser')}</h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); onSave(form) }} className="p-5 space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); onSave(form) }} className="p-5 space-y-4" autoComplete="off">
           {([
-            ['fullName', t('users.fullName'), 'text'],
-            ['email', t('users.email'), 'email'],
-            ['phone', t('users.phone'), 'text'],
-            ['password', t('users.password'), 'password'],
-          ] as [keyof CreateUserRequest, string, string][]).map(([field, label, type]) => (
+            ['fullName', t('users.fullName'), 'text', 'off'],
+            ['email', t('users.email'), 'email', 'off'],
+            ['phone', t('users.phone'), 'text', 'off'],
+          ] as [keyof CreateUserRequest, string, string, string][]).map(([field, label, type, ac]) => (
             <div key={field}>
               <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
               <input
                 required
                 type={type}
+                name={field}
+                autoComplete={ac}
                 value={form[field] as string}
                 onChange={(e) => set(field, e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
           ))}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.password')}</label>
+            <div className="relative">
+              <input
+                required
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                autoComplete="new-password"
+                value={form.password}
+                onChange={(e) => set('password', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                tabIndex={-1}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                aria-label={showPassword ? t('users.hidePassword') : t('users.showPassword')}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.role')}</label>

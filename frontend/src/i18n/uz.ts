@@ -98,6 +98,8 @@ export default {
     phone: 'Telefon',
     role: 'Rol',
     password: 'Parol',
+    showPassword: "Parolni ko'rsatish",
+    hidePassword: 'Parolni yashirish',
     deleteConfirm: "Siz ushbu foydalanuvchini o'chirishni istaysizmi?",
     roles: {
       admin: 'Administrator',
@@ -115,6 +117,7 @@ export default {
   dashboard: {
     title: 'Tahlil',
     lastDays: '{{count}} kun',
+    today: 'Bugun',
     som: "so'm",
     paidRevenue: 'Olingan',
     expectedRevenue: 'Kutilmoqda',

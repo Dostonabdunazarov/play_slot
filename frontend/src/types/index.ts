@@ -88,23 +88,13 @@ export interface UpdatePaymentRequest {
   prepaymentAmount?: number
 }
 
-export interface RevenuePoint {
-  date: string
-  paidRevenue: number
-  bookings: number
-}
-
 export interface VenueLoad {
   venueId: string
   venueName: string
   bookings: number
   hoursBooked: number
   paidRevenue: number
-}
-
-export interface HourLoad {
-  hour: number
-  bookings: number
+  outstandingAmount: number
 }
 
 export interface DashboardStats {
@@ -117,7 +107,5 @@ export interface DashboardStats {
   activeBookings: number
   cancelledBookings: number
   unpaidCount: number
-  revenueByDay: RevenuePoint[]
   venueLoad: VenueLoad[]
-  bookingsByHour: HourLoad[]
 }

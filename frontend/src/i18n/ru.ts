@@ -98,6 +98,8 @@ export default {
     phone: 'Телефон',
     role: 'Роль',
     password: 'Пароль',
+    showPassword: 'Показать пароль',
+    hidePassword: 'Скрыть пароль',
     deleteConfirm: 'Вы уверены, что хотите удалить этого пользователя?',
     roles: {
       admin: 'Администратор',
@@ -115,6 +117,7 @@ export default {
   dashboard: {
     title: 'Аналитика',
     lastDays: 'За {{count}} дн.',
+    today: 'Сегодня',
     som: 'сум',
     paidRevenue: 'Получено',
     expectedRevenue: 'Ожидается',

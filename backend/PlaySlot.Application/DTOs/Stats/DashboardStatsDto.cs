@@ -14,15 +14,7 @@ public record DashboardStatsDto(
     int ActiveBookings,
     int CancelledBookings,
     int UnpaidCount,
-    IReadOnlyList<RevenuePointDto> RevenueByDay,
-    IReadOnlyList<VenueLoadDto> VenueLoad,
-    IReadOnlyList<HourLoadDto> BookingsByHour);
+    IReadOnlyList<VenueLoadDto> VenueLoad);
 
-// Paid revenue and booking count for a single calendar day.
-public record RevenuePointDto(DateOnly Date, decimal PaidRevenue, int Bookings);
-
-// How busy a venue is in the range: bookings count, hours booked, paid revenue.
-public record VenueLoadDto(Guid VenueId, string VenueName, int Bookings, int HoursBooked, decimal PaidRevenue);
-
-// Number of bookings that start at a given hour of day (0–23) — reveals peak hours.
-public record HourLoadDto(int Hour, int Bookings);
+// How busy a venue is in the range: bookings count, hours booked, paid revenue, outstanding amount.
+public record VenueLoadDto(Guid VenueId, string VenueName, int Bookings, int HoursBooked, decimal PaidRevenue, decimal OutstandingAmount);
