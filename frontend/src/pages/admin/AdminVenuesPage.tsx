@@ -183,7 +183,8 @@ export default function AdminVenuesPage() {
             <div key={venue.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
               <div className="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                 <img
-                  src={venue.imageUrl || 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=200&q=70'}
+                  src={venue.imageUrl || '/venue-placeholder.svg'}
+                  onError={(e) => { e.currentTarget.src = '/venue-placeholder.svg' }}
                   alt={venue.name}
                   className="w-full h-full object-cover"
                 />

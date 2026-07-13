@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Изображение площадки недоступно">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16a34a"/>
+      <stop offset="1" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <!-- разметка поля -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="4">
+    <rect x="60" y="60" width="680" height="480" rx="8"/>
+    <line x1="400" y1="60" x2="400" y2="540"/>
+    <circle cx="400" cy="300" r="70"/>
+    <rect x="60" y="200" width="90" height="200"/>
+    <rect x="650" y="200" width="90" height="200"/>
+  </g>
+  <!-- мяч -->
+  <circle cx="400" cy="300" r="26" fill="#ffffff"/>
+  <path d="M400 280l16 12-6 19h-20l-6-19z" fill="#111827"/>
+  <text x="400" y="470" text-anchor="middle" font-family="system-ui,Segoe UI,Roboto,sans-serif" font-size="30" fill="#ffffff" fill-opacity="0.85">Нет изображения</text>
+</svg>

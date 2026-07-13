@@ -46,7 +46,8 @@ export default function VenuesPage() {
               {/* Image with gradient overlay */}
               <div className="relative h-48 bg-gray-200 overflow-hidden">
                 <img
-                  src={venue.imageUrl || 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600&q=80'}
+                  src={venue.imageUrl || '/venue-placeholder.svg'}
+                  onError={(e) => { e.currentTarget.src = '/venue-placeholder.svg' }}
                   alt={venue.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />

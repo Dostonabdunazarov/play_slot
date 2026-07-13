@@ -31,7 +31,7 @@ public static class DbSeeder
                     Address = "ул. Навои 1, Ташкент",
                     Phone = "+998711234567",
                     Description = "Профессиональное поле с искусственным газоном",
-                    ImageUrl = "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800",
+                    ImageUrl = "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80",
                     PricePerHour = 150000,
                     OpenTime = new TimeOnly(8, 0),
                     CloseTime = new TimeOnly(23, 0)
@@ -42,7 +42,7 @@ public static class DbSeeder
                     Address = "Чиланзарский р-н, 14 квартал",
                     Phone = "+998712345678",
                     Description = "Крытый манеж, всегда в хорошем состоянии",
-                    ImageUrl = "https://images.unsplash.com/photo-1551280247-0bd2a6e70c6f?w=800",
+                    ImageUrl = "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&q=80",
                     PricePerHour = 100000,
                     OpenTime = new TimeOnly(7, 0),
                     CloseTime = new TimeOnly(22, 0)

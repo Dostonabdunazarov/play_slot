@@ -78,7 +78,8 @@ export default function VenueDetailPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="h-56 bg-gray-200 overflow-hidden">
           <img
-            src={venue.imageUrl || 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80'}
+            src={venue.imageUrl || '/venue-placeholder.svg'}
+            onError={(e) => { e.currentTarget.src = '/venue-placeholder.svg' }}
             alt={venue.name}
             className="w-full h-full object-cover"
           />
