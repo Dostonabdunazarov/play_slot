@@ -87,3 +87,37 @@ export interface UpdatePaymentRequest {
   paymentStatus: PaymentStatus
   prepaymentAmount?: number
 }
+
+export interface RevenuePoint {
+  date: string
+  paidRevenue: number
+  bookings: number
+}
+
+export interface VenueLoad {
+  venueId: string
+  venueName: string
+  bookings: number
+  hoursBooked: number
+  paidRevenue: number
+}
+
+export interface HourLoad {
+  hour: number
+  bookings: number
+}
+
+export interface DashboardStats {
+  from: string
+  to: string
+  paidRevenue: number
+  expectedRevenue: number
+  outstandingAmount: number
+  totalBookings: number
+  activeBookings: number
+  cancelledBookings: number
+  unpaidCount: number
+  revenueByDay: RevenuePoint[]
+  venueLoad: VenueLoad[]
+  bookingsByHour: HourLoad[]
+}

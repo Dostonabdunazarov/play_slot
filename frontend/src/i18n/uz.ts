@@ -29,6 +29,7 @@ export default {
   nav: {
     venues: 'Maydonlar',
     myBookings: 'Mening bronlarim',
+    adminDashboard: 'Tahlil',
     adminVenues: 'Maydonlarni boshqarish',
     adminBookings: 'Barcha bronlar',
     adminUsers: 'Foydalanuvchilar',
@@ -110,5 +111,19 @@ export default {
     calendarView: 'Taqvim',
     selectDate: 'Sanani tanlang',
     allVenues: 'Barcha maydonlar',
+  },
+  dashboard: {
+    title: 'Tahlil',
+    lastDays: '{{count}} kun',
+    som: "so'm",
+    paidRevenue: 'Olingan',
+    expectedRevenue: 'Kutilmoqda',
+    outstanding: "To'lanmagan qoldiq",
+    activeBookings: 'Faol bronlar',
+    revenueByDay: 'Kunlik daromad',
+    peakHours: 'Eng band soatlar',
+    venueLoad: 'Maydonlar bandligi',
+    bookingsCount: 'Bronlar',
+    hoursBooked: 'Soatlar',
   },
 }

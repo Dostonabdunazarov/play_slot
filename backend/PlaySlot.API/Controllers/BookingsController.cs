@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlaySlot.Application.DTOs.Bookings;
+using PlaySlot.Application.Interfaces;
 using PlaySlot.Domain.Entities;
 using PlaySlot.Domain.Enums;
 using PlaySlot.Infrastructure.Data;
@@ -12,7 +13,7 @@ namespace PlaySlot.API.Controllers;
 [ApiController]
 [Route("api/bookings")]
 [Authorize]
-public class BookingsController(AppDbContext db) : ControllerBase
+public class BookingsController(AppDbContext db, INotificationService notifications) : ControllerBase
 {
     private static BookingDto ToDto(Booking b) =>
         new(b.Id, b.VenueId, b.Venue.Name, b.UserId,
@@ -30,8 +31,24 @@ public class BookingsController(AppDbContext db) : ControllerBase
             .Where(b => b.VenueId == venueId && b.Date == date && b.Status == BookingStatus.Active)
             .OrderBy(b => b.StartTime)
             .ToListAsync();
-        return Ok(bookings.Select(ToDto));
+
+        // Admins see full client details; regular users only need to know a slot is
+        // taken — hide other clients' name/phone to avoid leaking personal data.
+        var isAdmin = User.IsInRole("Admin");
+        var currentUserId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : (Guid?)null;
+
+        return Ok(bookings.Select(b =>
+            isAdmin || b.UserId == currentUserId ? ToDto(b) : ToMaskedDto(b)));
     }
+
+    // Slot is shown as busy but personal details are stripped.
+    private static BookingDto ToMaskedDto(Booking b) =>
+        new(b.Id, b.VenueId, b.Venue.Name, b.UserId,
+            "Занято", "",
+            b.Date, b.StartTime, b.EndTime,
+            0, 0,
+            b.PaymentStatus.ToString(), null, b.Status.ToString(),
+            b.CreatedAt);
 
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
@@ -101,6 +118,7 @@ public class BookingsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
 
         await db.Entry(booking).Reference(b => b.Venue).LoadAsync();
+        await notifications.NotifyBookingCreatedAsync(booking);
         return CreatedAtAction(nameof(GetAll), new { id = booking.Id }, ToDto(booking));
     }
 
@@ -125,7 +143,7 @@ public class BookingsController(AppDbContext db) : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Cancel(Guid id)
     {
-        var booking = await db.Bookings.FindAsync(id);
+        var booking = await db.Bookings.Include(b => b.Venue).FirstOrDefaultAsync(b => b.Id == id);
         if (booking is null) return NotFound();
         if (booking.Status == BookingStatus.Cancelled)
             return BadRequest(new { message = "Booking is already cancelled" });
@@ -133,6 +151,7 @@ public class BookingsController(AppDbContext db) : ControllerBase
         booking.Status = BookingStatus.Cancelled;
         booking.CancelledAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        await notifications.NotifyBookingCancelledAsync(booking);
         return NoContent();
     }
 }

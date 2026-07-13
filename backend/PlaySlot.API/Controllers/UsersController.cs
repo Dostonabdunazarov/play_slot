@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,23 @@ public class UsersController(AppDbContext db) : ControllerBase
     {
         var user = await db.Users.FindAsync(id);
         if (user is null) return NotFound();
+
+        // Prevent an admin from deleting their own account.
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (currentUserId is not null && Guid.TryParse(currentUserId, out var uid) && uid == id)
+            return BadRequest(new { message = "You cannot delete your own account" });
+
+        // Never allow removing the last remaining admin.
+        if (user.Role == UserRole.Admin)
+        {
+            var adminCount = await db.Users.CountAsync(u => u.Role == UserRole.Admin);
+            if (adminCount <= 1)
+                return BadRequest(new { message = "Cannot delete the last admin account" });
+        }
+
+        // Block deletion if the user still has bookings (would violate the FK).
+        if (await db.Bookings.AnyAsync(b => b.UserId == id))
+            return Conflict(new { message = "Cannot delete a user who has bookings" });
 
         db.Users.Remove(user);
         await db.SaveChangesAsync();

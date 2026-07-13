@@ -25,6 +25,11 @@ services:
     environment:
       ConnectionStrings__Default: "Host=db;Database=playslot;Username=postgres;Password=${POSTGRES_PASSWORD}"
       Jwt__Key: ${JWT_KEY}
+      # Разрешённые origins для CORS в проде (обязательно). Через запятую.
+      Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-https://play.hypex.site}
+      # Telegram-уведомления (опционально).
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
+      Telegram__AdminChatId: ${TELEGRAM_ADMIN_CHAT_ID:-}
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:8080"
     networks:

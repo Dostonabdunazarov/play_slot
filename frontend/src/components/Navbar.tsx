@@ -26,6 +26,7 @@ export default function Navbar() {
     location.pathname === path || location.pathname.startsWith(path + '/')
 
   const adminLinks = [
+    { to: '/admin/dashboard', label: t('nav.adminDashboard') },
     { to: '/admin/schedule', label: t('nav.adminSchedule') },
     { to: '/admin/venues', label: t('nav.adminVenues') },
     { to: '/admin/bookings', label: t('nav.adminBookings') },

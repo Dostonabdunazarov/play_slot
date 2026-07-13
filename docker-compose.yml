@@ -31,6 +31,9 @@ services:
       Jwt__Key: ${JWT_KEY:-super-secret-key-32chars-minimum!}
       Jwt__Issuer: "PlaySlot"
       Jwt__Audience: "PlaySlot"
+      # Telegram-уведомления о бронях (опционально; пусто — уведомления отключены).
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
+      Telegram__AdminChatId: ${TELEGRAM_ADMIN_CHAT_ID:-}
       ASPNETCORE_ENVIRONMENT: "Development"
     depends_on:
       db:

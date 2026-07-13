@@ -29,6 +29,7 @@ export default {
   nav: {
     venues: 'Площадки',
     myBookings: 'Мои брони',
+    adminDashboard: 'Аналитика',
     adminVenues: 'Управление площадками',
     adminBookings: 'Все брони',
     adminUsers: 'Пользователи',
@@ -110,5 +111,19 @@ export default {
     calendarView: 'Календарь',
     selectDate: 'Выберите дату',
     allVenues: 'Все площадки',
+  },
+  dashboard: {
+    title: 'Аналитика',
+    lastDays: 'За {{count}} дн.',
+    som: 'сум',
+    paidRevenue: 'Получено',
+    expectedRevenue: 'Ожидается',
+    outstanding: 'Остаток к оплате',
+    activeBookings: 'Активных броней',
+    revenueByDay: 'Выручка по дням',
+    peakHours: 'Часы пик',
+    venueLoad: 'Загрузка площадок',
+    bookingsCount: 'Броней',
+    hoursBooked: 'Часов',
   },
 }

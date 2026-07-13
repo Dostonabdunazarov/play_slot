@@ -15,6 +15,7 @@ import AdminVenuesPage from './pages/admin/AdminVenuesPage'
 import AdminBookingsPage from './pages/admin/AdminBookingsPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminSchedulePage from './pages/admin/AdminSchedulePage'
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -40,6 +41,14 @@ export default function App() {
             <Route path="/my-bookings" element={<MyBookingsPage />} />
             <Route path="/bookings/new" element={<NewBookingPage />} />
 
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute adminOnly>
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin/schedule"
               element={
