@@ -74,6 +74,7 @@ export default {
     paymentStatus: "To'lov holati",
     venue: 'Maydon',
     bookSlot: 'Slotni bron qilish',
+    callToBook: "bron qilish uchun qo'ng'iroq qiling:",
     free: 'Bo\'sh',
     booked: 'Band',
     noBookings: 'Bronlar topilmadi',

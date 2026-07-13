@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LogOut, Globe, Menu, X } from 'lucide-react'
+import { LogOut, LogIn, Globe, Menu, X } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
 export default function Navbar() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout, isAdmin } = useAuthStore()
+  const { user, logout, isAdmin, isAuthenticated } = useAuthStore()
+  const loggedIn = isAuthenticated()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const toggleLang = () => {
@@ -38,7 +39,10 @@ export default function Navbar() {
     { to: '/my-bookings', label: t('nav.myBookings') },
   ]
 
-  const links = isAdmin() ? adminLinks : userLinks
+  // Guests (not logged in) only get the public venues/schedule listing.
+  const guestLinks = [{ to: '/venues', label: t('nav.venues') }]
+
+  const links = !loggedIn ? guestLinks : isAdmin() ? adminLinks : userLinks
 
   return (
     <nav className="bg-green-800 text-white shadow-lg">
@@ -69,9 +73,11 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-green-200 hidden sm:block truncate max-w-[120px]">
-              {user?.fullName}
-            </span>
+            {loggedIn && (
+              <span className="text-sm text-green-200 hidden sm:block truncate max-w-[120px]">
+                {user?.fullName}
+              </span>
+            )}
             <button
               onClick={toggleLang}
               className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-green-100 hover:bg-white/10 transition-colors"
@@ -80,13 +86,23 @@ export default function Navbar() {
               <Globe className="w-4 h-4" />
               <span className="uppercase font-medium">{i18n.language}</span>
             </button>
-            <button
-              onClick={handleLogout}
-              className="hidden md:flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-green-100 hover:bg-white/10 transition-colors"
-              title={t('auth.logout')}
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            {loggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="hidden md:flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-green-100 hover:bg-white/10 transition-colors"
+                title={t('auth.logout')}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="hidden md:flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-white/15 text-white hover:bg-white/25 transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                {t('auth.login')}
+              </Link>
+            )}
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen((v) => !v)}
@@ -118,14 +134,27 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="border-t border-green-700 pt-2 mt-2">
-              <div className="text-xs text-green-400 px-3 mb-1">{user?.fullName}</div>
-              <button
-                onClick={() => { setMobileOpen(false); handleLogout() }}
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-green-100 hover:bg-white/10 w-full text-left transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                {t('auth.logout')}
-              </button>
+              {loggedIn ? (
+                <>
+                  <div className="text-xs text-green-400 px-3 mb-1">{user?.fullName}</div>
+                  <button
+                    onClick={() => { setMobileOpen(false); handleLogout() }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-green-100 hover:bg-white/10 w-full text-left transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {t('auth.logout')}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-green-100 hover:bg-white/10 w-full text-left transition-colors"
+                >
+                  <LogIn className="w-4 h-4" />
+                  {t('auth.login')}
+                </Link>
+              )}
             </div>
           </div>
         </div>

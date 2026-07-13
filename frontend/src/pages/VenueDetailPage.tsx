@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, Phone, Clock, Calendar } from 'lucide-react'
 import { getVenue } from '../api/venues'
 import { phoneLink } from '../utils/format'
 import { getBookingsByVenueAndDate } from '../api/bookings'
+import { useAuthStore } from '../store/authStore'
 import type { Booking } from '../types'
 
 function formatTime(t: string) {
@@ -38,6 +39,7 @@ export default function VenueDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const loggedIn = useAuthStore((s) => s.isAuthenticated())
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [hoveredBooking, setHoveredBooking] = useState<string | null>(null)
 
@@ -154,7 +156,7 @@ export default function VenueDetailPage() {
                       </span>
                       {hoveredBooking === booking.id && <SlotTooltip booking={booking} />}
                     </div>
-                  ) : (
+                  ) : loggedIn ? (
                     <button
                       onClick={() =>
                         navigate(
@@ -165,6 +167,14 @@ export default function VenueDetailPage() {
                     >
                       {t('bookings.free')} — {t('bookings.bookSlot')}
                     </button>
+                  ) : (
+                    // Guests can't book online — direct them to call the venue.
+                    <div className="w-full h-10 rounded-lg bg-gray-50 border border-dashed border-gray-200 flex items-center px-3 text-xs text-gray-400">
+                      {t('bookings.free')} — {t('bookings.callToBook')}{' '}
+                      <a href={phoneLink(venue.phone)} className="ml-1 text-green-600 hover:underline font-medium">
+                        {venue.phone}
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>

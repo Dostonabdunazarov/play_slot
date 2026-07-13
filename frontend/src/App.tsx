@@ -31,15 +31,32 @@ export default function App() {
 
           <Route
             element={
-              <ProtectedRoute>
+              <ProtectedRoute publicRoute>
                 <Layout />
               </ProtectedRoute>
             }
           >
+            {/* Public: guests can browse venues and view schedules. */}
             <Route path="/venues" element={<VenuesPage />} />
             <Route path="/venues/:id" element={<VenueDetailPage />} />
-            <Route path="/my-bookings" element={<MyBookingsPage />} />
-            <Route path="/bookings/new" element={<NewBookingPage />} />
+
+            {/* Require login: booking management. */}
+            <Route
+              path="/my-bookings"
+              element={
+                <ProtectedRoute>
+                  <MyBookingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bookings/new"
+              element={
+                <ProtectedRoute>
+                  <NewBookingPage />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/admin/dashboard"

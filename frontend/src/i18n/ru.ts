@@ -74,6 +74,7 @@ export default {
     paymentStatus: 'Статус оплаты',
     venue: 'Площадка',
     bookSlot: 'Забронировать слот',
+    callToBook: 'звоните, чтобы забронировать:',
     free: 'Свободно',
     booked: 'Занято',
     noBookings: 'Брони не найдены',

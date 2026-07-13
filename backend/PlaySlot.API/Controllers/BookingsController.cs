@@ -23,7 +23,11 @@ public class BookingsController(AppDbContext db, INotificationService notificati
             b.PaymentStatus.ToString(), b.Notes, b.Status.ToString(),
             b.CreatedAt);
 
+    // Public: guests (not logged in) may view a venue's schedule to see which
+    // slots are busy. Personal details are masked for anyone who isn't the admin
+    // or the booking's owner (see below), so anonymous callers only see "busy".
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetByVenueAndDate([FromQuery] Guid venueId, [FromQuery] DateOnly date)
     {
         var bookings = await db.Bookings
