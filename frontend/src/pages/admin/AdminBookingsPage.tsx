@@ -132,9 +132,11 @@ export default function AdminBookingsPage() {
       if (filterDate && b.date !== filterDate) return false
       return true
     })
-    // Sort by booking date + start time (most recent first).
-    .sort((a, b) =>
-      `${b.date}T${b.startTime}`.localeCompare(`${a.date}T${a.startTime}`)
+    // Sort by booking date + start time, newest first.
+    .sort(
+      (a, b) =>
+        new Date(`${b.date}T${b.startTime}`).getTime() -
+        new Date(`${a.date}T${a.startTime}`).getTime()
     )
 
   // A booking is past once its end time (date + endTime) is before now.
