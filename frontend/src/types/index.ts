@@ -30,6 +30,7 @@ export interface Booking {
   venueId: string
   venueName: string
   userId: string
+  createdByName: string
   clientName: string
   clientPhone: string
   date: string

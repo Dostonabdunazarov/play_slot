@@ -73,6 +73,7 @@ export default {
     status: 'Holat',
     paymentStatus: "To'lov holati",
     venue: 'Maydon',
+    createdBy: 'Yaratdi',
     bookSlot: 'Slotni bron qilish',
     callToBook: "bron qilish uchun qo'ng'iroq qiling:",
     free: 'Bo\'sh',

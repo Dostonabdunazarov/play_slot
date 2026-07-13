@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Calendar, Clock, Phone, X } from 'lucide-react'
+import { Calendar, Clock, Phone, X, UserCircle } from 'lucide-react'
 import { getAllBookings, cancelBooking, updatePayment } from '../../api/bookings'
 import { formatDate, phoneLink } from '../../utils/format'
 import { getVenues } from '../../api/venues'
@@ -191,6 +191,11 @@ export default function AdminBookingsPage() {
                     <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-violet-500" />{formatDate(booking.date)}</span>
                     <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-orange-500" />{booking.startTime.substring(0, 5)}–{booking.endTime.substring(0, 5)}</span>
                     <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-green-500" /><a href={phoneLink(booking.clientPhone)} className="text-green-700 hover:underline">{booking.clientPhone}</a></span>
+                    {booking.createdByName && (
+                      <span className="flex items-center gap-1" title={t('bookings.createdBy')}>
+                        <UserCircle className="w-3.5 h-3.5 text-blue-500" />{booking.createdByName}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-4 mt-2 text-xs">
                     <span className="text-gray-500">Итого: <span className="font-medium text-gray-800">{booking.totalAmount.toLocaleString()} сум</span></span>

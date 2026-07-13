@@ -73,6 +73,7 @@ export default {
     status: 'Статус',
     paymentStatus: 'Статус оплаты',
     venue: 'Площадка',
+    createdBy: 'Создал',
     bookSlot: 'Забронировать слот',
     callToBook: 'звоните, чтобы забронировать:',
     free: 'Свободно',

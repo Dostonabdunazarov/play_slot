@@ -17,6 +17,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
 {
     private static BookingDto ToDto(Booking b) =>
         new(b.Id, b.VenueId, b.Venue.Name, b.UserId,
+            b.User?.FullName ?? "",
             b.ClientName, b.ClientPhone,
             b.Date, b.StartTime, b.EndTime,
             b.TotalAmount, b.PrepaymentAmount,
@@ -32,6 +33,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
     {
         var bookings = await db.Bookings
             .Include(b => b.Venue)
+            .Include(b => b.User)
             .Where(b => b.VenueId == venueId && b.Date == date && b.Status == BookingStatus.Active)
             .OrderBy(b => b.StartTime)
             .ToListAsync();
@@ -48,6 +50,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
     // Slot is shown as busy but personal details are stripped.
     private static BookingDto ToMaskedDto(Booking b) =>
         new(b.Id, b.VenueId, b.Venue.Name, b.UserId,
+            "",
             "Занято", "",
             b.Date, b.StartTime, b.EndTime,
             0, 0,
@@ -58,7 +61,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll([FromQuery] Guid? venueId, [FromQuery] DateOnly? date)
     {
-        var query = db.Bookings.Include(b => b.Venue).AsQueryable();
+        var query = db.Bookings.Include(b => b.Venue).Include(b => b.User).AsQueryable();
 
         if (venueId.HasValue)
             query = query.Where(b => b.VenueId == venueId.Value);
@@ -75,6 +78,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var bookings = await db.Bookings
             .Include(b => b.Venue)
+            .Include(b => b.User)
             .Where(b => b.UserId == userId)
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
@@ -122,6 +126,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         await db.SaveChangesAsync();
 
         await db.Entry(booking).Reference(b => b.Venue).LoadAsync();
+        await db.Entry(booking).Reference(b => b.User).LoadAsync();
         await notifications.NotifyBookingCreatedAsync(booking);
         return CreatedAtAction(nameof(GetAll), new { id = booking.Id }, ToDto(booking));
     }
@@ -130,7 +135,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdatePayment(Guid id, [FromBody] UpdatePaymentRequest request)
     {
-        var booking = await db.Bookings.Include(b => b.Venue).FirstOrDefaultAsync(b => b.Id == id);
+        var booking = await db.Bookings.Include(b => b.Venue).Include(b => b.User).FirstOrDefaultAsync(b => b.Id == id);
         if (booking is null) return NotFound();
 
         if (!Enum.TryParse<PaymentStatus>(request.PaymentStatus, true, out var status))
@@ -147,7 +152,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Cancel(Guid id)
     {
-        var booking = await db.Bookings.Include(b => b.Venue).FirstOrDefaultAsync(b => b.Id == id);
+        var booking = await db.Bookings.Include(b => b.Venue).Include(b => b.User).FirstOrDefaultAsync(b => b.Id == id);
         if (booking is null) return NotFound();
         if (booking.Status == BookingStatus.Cancelled)
             return BadRequest(new { message = "Booking is already cancelled" });
