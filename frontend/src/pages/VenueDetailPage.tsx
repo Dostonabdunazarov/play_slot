@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { ArrowLeft, MapPin, Phone, Clock, Calendar } from 'lucide-react'
 import { getVenue } from '../api/venues'
-import { phoneLink } from '../utils/format'
+import { phoneLink, todayIso } from '../utils/format'
 import { getBookingsByVenueAndDate } from '../api/bookings'
 import { useAuthStore } from '../store/authStore'
 import type { Booking } from '../types'
@@ -127,6 +127,7 @@ export default function VenueDetailPage() {
             <input
               type="date"
               value={selectedDate}
+              min={todayIso()}
               onChange={(e) => setSelectedDate(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />

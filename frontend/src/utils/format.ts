@@ -9,6 +9,12 @@ export function phoneLink(phone: string) {
   return `tel:${phone.replace(/\s/g, '')}`
 }
 
+// Today's local date as yyyy-MM-dd — used as the `min` for date pickers so
+// past dates can't be chosen.
+export function todayIso(): string {
+  return format(new Date(), 'yyyy-MM-dd')
+}
+
 // Compact "12 500" style with a thin space as thousands separator.
 export function formatMoney(amount: number): string {
   return Math.round(amount).toLocaleString('ru-RU')
