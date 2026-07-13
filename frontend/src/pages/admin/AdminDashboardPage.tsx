@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { TrendingUp, CalendarCheck, Wallet, AlertCircle } from 'lucide-react'
@@ -54,6 +54,7 @@ function StatCard({
 
 export default function AdminDashboardPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [rangeDays, setRangeDays] = useState<number>(30)
 
   const from = isoDaysAgo(rangeDays)
@@ -135,7 +136,11 @@ export default function AdminDashboardPage() {
                 </thead>
                 <tbody>
                   {stats.venueLoad.map((v) => (
-                    <tr key={v.venueId} className="border-b border-gray-50 last:border-0">
+                    <tr
+                      key={v.venueId}
+                      onClick={() => navigate(`/venues/${v.venueId}`)}
+                      className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+                    >
                       <td className="py-2 pr-2 text-gray-800 font-medium">{v.venueName}</td>
                       <td className="py-2 px-2 text-right text-gray-600">{v.bookings}</td>
                       <td className="py-2 px-2 text-right text-gray-600">{v.hoursBooked}</td>
