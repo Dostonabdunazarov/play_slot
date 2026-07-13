@@ -20,7 +20,8 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    // Send the now-guest user to the public root (redirects to /venues).
+    navigate('/')
   }
 
   const isActive = (path: string) =>
