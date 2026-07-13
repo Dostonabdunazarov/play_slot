@@ -110,6 +110,7 @@ export default {
   },
   schedule: {
     title: 'Расписание',
+    availabilityToday: 'Занятость на сегодня',
     tableView: 'Таблица',
     calendarView: 'Календарь',
     selectDate: 'Выберите дату',

@@ -110,6 +110,7 @@ export default {
   },
   schedule: {
     title: 'Jadval',
+    availabilityToday: 'Bugungi bandlik',
     tableView: 'Jadval',
     calendarView: 'Taqvim',
     selectDate: 'Sanani tanlang',

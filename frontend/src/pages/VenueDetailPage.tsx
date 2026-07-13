@@ -114,21 +114,30 @@ export default function VenueDetailPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-violet-500" />
-            {t('schedule.title')}
+            {loggedIn ? t('schedule.title') : t('schedule.availabilityToday')}
           </h2>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+          {/* Only logged-in users pick a date; guests see today's availability. */}
+          {loggedIn && (
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          )}
         </div>
 
-        {/* Legend */}
+        {/* Legend — guests only need busy vs free; staff see payment statuses. */}
         <div className="flex gap-4 mb-4 text-xs text-gray-500">
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500 inline-block" />{t('bookings.paymentStatuses.fullypaid')}</div>
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-yellow-400 inline-block" />{t('bookings.paymentStatuses.prepaid')}</div>
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400 inline-block" />{t('bookings.paymentStatuses.unpaid')}</div>
+          {loggedIn ? (
+            <>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500 inline-block" />{t('bookings.paymentStatuses.fullypaid')}</div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-yellow-400 inline-block" />{t('bookings.paymentStatuses.prepaid')}</div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400 inline-block" />{t('bookings.paymentStatuses.unpaid')}</div>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400 inline-block" />{t('bookings.booked')}</div>
+          )}
           <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-100 border border-gray-200 inline-block" />{t('bookings.free')}</div>
         </div>
 
@@ -146,16 +155,23 @@ export default function VenueDetailPage() {
                 </span>
                 <div className="flex-1 relative">
                   {booking ? (
-                    <div
-                      className={`relative h-10 rounded-lg ${paymentBadgeClass(booking.paymentStatus)} flex items-center px-3 cursor-default`}
-                      onMouseEnter={() => setHoveredBooking(booking.id)}
-                      onMouseLeave={() => setHoveredBooking(null)}
-                    >
-                      <span className="text-white text-xs font-medium truncate">
-                        {booking.clientName} · <a href={phoneLink(booking.clientPhone)} className="hover:underline">{booking.clientPhone}</a>
-                      </span>
-                      {hoveredBooking === booking.id && <SlotTooltip booking={booking} />}
-                    </div>
+                    loggedIn ? (
+                      <div
+                        className={`relative h-10 rounded-lg ${paymentBadgeClass(booking.paymentStatus)} flex items-center px-3 cursor-default`}
+                        onMouseEnter={() => setHoveredBooking(booking.id)}
+                        onMouseLeave={() => setHoveredBooking(null)}
+                      >
+                        <span className="text-white text-xs font-medium truncate">
+                          {booking.clientName} · <a href={phoneLink(booking.clientPhone)} className="hover:underline">{booking.clientPhone}</a>
+                        </span>
+                        {hoveredBooking === booking.id && <SlotTooltip booking={booking} />}
+                      </div>
+                    ) : (
+                      // Guests just see the slot is taken — no client details.
+                      <div className="h-10 rounded-lg bg-gray-400 flex items-center px-3 cursor-default">
+                        <span className="text-white text-xs font-medium">{t('bookings.booked')}</span>
+                      </div>
+                    )
                   ) : loggedIn ? (
                     <button
                       onClick={() =>
