@@ -7,6 +7,7 @@ using PlaySlot.Application.Interfaces;
 using PlaySlot.Domain.Entities;
 using PlaySlot.Domain.Enums;
 using PlaySlot.Infrastructure.Data;
+using Npgsql;
 
 namespace PlaySlot.API.Controllers;
 
@@ -67,12 +68,12 @@ public class BookingsController(AppDbContext db, INotificationService notificati
 
     // Slot is shown as busy but personal details are stripped.
     private static BookingDto ToMaskedDto(Booking b) =>
-        new(b.Id, b.VenueId, b.Venue.Name, b.UserId,
+        new(b.Id, b.VenueId, b.Venue.Name, Guid.Empty,
             "",
             "Занято", "",
             b.Date, b.StartTime, b.EndTime,
             0, 0,
-            b.PaymentStatus.ToString(), null, b.Status.ToString(),
+            PaymentStatus.Unpaid.ToString(), null, b.Status.ToString(),
             b.CreatedAt);
 
     [HttpGet("all")]
@@ -112,7 +113,12 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         if (venue is null || !venue.IsActive)
             return BadRequest(new { message = "Venue not found or inactive" });
 
+        if (request.StartTime.Ticks % TimeSpan.TicksPerHour != 0)
+            return BadRequest(new { message = "Booking must start on the hour" });
+
         var endTime = request.StartTime.AddHours(1);
+        if (endTime <= request.StartTime)
+            return BadRequest(new { message = "Booking cannot cross midnight" });
 
         // Reject slots that start in the past. The business runs in Uzbekistan
         // (UTC+5), so compare against "now" in that timezone, not UTC.
@@ -147,7 +153,14 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         };
 
         db.Bookings.Add(booking);
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            return Conflict(new { message = "Time slot is already booked" });
+        }
 
         await db.Entry(booking).Reference(b => b.Venue).LoadAsync();
         await db.Entry(booking).Reference(b => b.User).LoadAsync();
@@ -164,6 +177,9 @@ public class BookingsController(AppDbContext db, INotificationService notificati
 
         if (!Enum.TryParse<PaymentStatus>(request.PaymentStatus, true, out var status))
             return BadRequest(new { message = "Invalid payment status. Use: Unpaid, Prepaid, FullyPaid" });
+
+        if (request.PrepaymentAmount is { } prepayment && prepayment > booking.TotalAmount)
+            return BadRequest(new { message = "Prepayment cannot exceed the total amount" });
 
         booking.PaymentStatus = status;
         booking.PrepaymentAmount = request.PrepaymentAmount;

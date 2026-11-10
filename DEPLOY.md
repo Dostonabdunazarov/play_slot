@@ -6,7 +6,7 @@
 
 ```text
 Браузер → Cloudflare (HTTPS) → сервер :80 → Caddy → /api/* → playslot-backend:8080
-                                                   → всё остальное → playslot-frontend:80
+                                                   → всё остальное → playslot-frontend:8080
 ```
 
 Фронтенд зовёт API относительным путём `/api` (axios `baseURL='/api'`), поэтому
@@ -20,7 +20,7 @@
 | `docker-compose.prod.yml` | прод-оверлей: сеть `proxy`, без публичных портов, секреты из `.env`, `ASPNETCORE_ENVIRONMENT=Production` |
 | `frontend/nginx.conf` | SPA-fallback + gzip + жёсткий кэш `/assets/` |
 | `backend/.dockerignore`, `frontend/.dockerignore` | чистый build-контекст |
-| `.env.example` | шаблон секретов (`POSTGRES_PASSWORD`, `JWT_KEY`) |
+| `.env.example` | шаблон секретов (`POSTGRES_PASSWORD`, `JWT_KEY`, `ADMIN_PASSWORD`) |
 | `.github/workflows/deploy.yml` | авто-деплой по push в `main` через SSH |
 | `corpdev/infra/Caddyfile` | блок `play.hypex.site` (уже добавлен) |
 
@@ -34,7 +34,8 @@ cd play_slot
 
 # 2. Создать .env с реальными секретами (в git не коммитится)
 cp .env.example .env
-# отредактировать POSTGRES_PASSWORD и JWT_KEY (JWT_KEY: openssl rand -base64 48)
+# отредактировать POSTGRES_PASSWORD, JWT_KEY (openssl rand -base64 48)
+# и ADMIN_PASSWORD (>= 12 символов; без него на пустой БД бэкенд не стартует)
 
 # 3. Общая сеть proxy (если ещё не создана — её поднимает corpdev)
 docker network inspect proxy >/dev/null 2>&1 || docker network create proxy

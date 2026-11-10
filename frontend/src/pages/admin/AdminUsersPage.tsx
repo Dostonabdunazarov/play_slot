@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, X, User, Eye, EyeOff } from 'lucide-react'
+import { Plus, Trash2, X, User, Eye, EyeOff, KeyRound } from 'lucide-react'
 import { phoneLink } from '../../utils/format'
-import { getUsers, createUser, deleteUser } from '../../api/users'
+import { getUsers, createUser, deleteUser, changePassword } from '../../api/users'
 import type { CreateUserRequest, Role } from '../../types'
 
 const EMPTY: CreateUserRequest = { fullName: '', phone: '', email: '', password: '', role: 'User' }
@@ -58,6 +58,7 @@ function CreateUserModal({
             <div className="relative">
               <input
                 required
+                minLength={10}
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 autoComplete="new-password"
@@ -107,10 +108,74 @@ function CreateUserModal({
   )
 }
 
+function ChangePasswordModal({
+  onClose,
+  onSave,
+  loading,
+}: {
+  onClose: () => void
+  onSave: (data: { currentPassword: string; newPassword: string }) => void
+  loading: boolean
+}) {
+  const { t } = useTranslation()
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="font-semibold">{t('users.changePassword')}</h2>
+          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); onSave({ currentPassword, newPassword }) }} className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.currentPassword')}</label>
+            <input
+              required
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.newPassword')}</label>
+            <input
+              required
+              minLength={10}
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <p className="text-xs text-gray-400 mt-1">{t('users.passwordHint')}</p>
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-medium py-2 rounded-lg transition-colors text-sm"
+            >
+              {loading ? t('common.loading') : t('common.save')}
+            </button>
+            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+              {t('common.cancel')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminUsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
 
   const { data: users = [], isLoading } = useQuery({ queryKey: ['users'], queryFn: getUsers })
 
@@ -118,6 +183,12 @@ export default function AdminUsersPage() {
     mutationFn: createUser,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); setModalOpen(false); toast.success(t('common.create')) },
     onError: () => toast.error(t('common.error')),
+  })
+
+  const passwordMutation = useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => { setPasswordModalOpen(false); toast.success(t('users.passwordChanged')) },
+    onError: () => toast.error(t('users.passwordError')),
   })
 
   const deleteMutation = useMutation({
@@ -132,13 +203,22 @@ export default function AdminUsersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t('nav.adminUsers')}</h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4 text-white" />
-          {t('users.addUser')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPasswordModalOpen(true)}
+            className="flex items-center gap-2 border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <KeyRound className="w-4 h-4" />
+            {t('users.changePassword')}
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4 text-white" />
+            {t('users.addUser')}
+          </button>
+        </div>
       </div>
 
       {!users.length ? (
@@ -189,6 +269,14 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {passwordModalOpen && (
+        <ChangePasswordModal
+          onClose={() => setPasswordModalOpen(false)}
+          onSave={(data) => passwordMutation.mutate(data)}
+          loading={passwordMutation.isPending}
+        />
       )}
 
       {modalOpen && (

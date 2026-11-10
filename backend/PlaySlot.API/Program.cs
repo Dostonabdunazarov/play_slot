@@ -6,6 +6,9 @@ using PlaySlot.Application.Interfaces;
 using PlaySlot.API.Services;
 using Scalar.AspNetCore;
 using System.Text;
+using System.Net;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,11 +83,34 @@ builder.Services.AddCors(opt =>
         }
     }));
 
+static string ClientIp(HttpContext ctx)
+{
+    var cf = ctx.Request.Headers["CF-Connecting-IP"].ToString();
+    if (IPAddress.TryParse(cf, out var cfIp)) return cfIp.ToString();
+    return ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
+
+static void AddIpLimiter(RateLimiterOptions opt, string name, int permitLimit, TimeSpan window) =>
+    opt.AddPolicy(name, ctx => RateLimitPartition.GetFixedWindowLimiter(ClientIp(ctx), _ => new FixedWindowRateLimiterOptions
+    {
+        PermitLimit = permitLimit,
+        Window = window,
+        QueueLimit = 0
+    }));
+
+builder.Services.AddRateLimiter(opt =>
+{
+    opt.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    AddIpLimiter(opt, "login", 10, TimeSpan.FromMinutes(5));
+    AddIpLimiter(opt, "password", 10, TimeSpan.FromMinutes(5));
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
@@ -99,7 +125,11 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.SeedAsync(db);
+    await DbSeeder.SeedAsync(
+        db,
+        builder.Configuration["Seed:AdminEmail"],
+        builder.Configuration["Seed:AdminPassword"],
+        isProduction);
 }
 
 app.Run();

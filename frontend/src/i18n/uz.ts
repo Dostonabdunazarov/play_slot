@@ -109,6 +109,12 @@ export default {
       user: 'Foydalanuvchi',
     },
     noUsers: 'Foydalanuvchilar topilmadi',
+    changePassword: 'Parolni almashtirish',
+    currentPassword: 'Joriy parol',
+    newPassword: 'Yangi parol',
+    passwordHint: 'Kamida 10 ta belgi',
+    passwordChanged: "Parol o'zgartirildi",
+    passwordError: "Parolni almashtirib bo'lmadi. Joriy parolni tekshiring",
   },
   schedule: {
     title: 'Jadval',

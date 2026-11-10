@@ -29,7 +29,7 @@ public class VenuesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetById(Guid id)
     {
         var venue = await db.Venues.FindAsync(id);
-        if (venue is null) return NotFound();
+        if (venue is null || (!venue.IsActive && !User.IsInRole("Admin"))) return NotFound();
         return Ok(ToDto(venue));
     }
 

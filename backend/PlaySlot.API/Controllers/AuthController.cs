@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using PlaySlot.Application.DTOs.Auth;
 using PlaySlot.Application.DTOs.Users;
@@ -12,11 +13,15 @@ namespace PlaySlot.API.Controllers;
 [Route("api/auth")]
 public class AuthController(AppDbContext db, ITokenService tokenService) : ControllerBase
 {
+    private static readonly string DummyHash = BCrypt.Net.BCrypt.HashPassword("dummy-password-for-timing");
+
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        var passwordValid = BCrypt.Net.BCrypt.Verify(request.Password, user?.PasswordHash ?? DummyHash);
+        if (user is null || !passwordValid)
             return Unauthorized(new { message = "Invalid email or password" });
 
         var token = tokenService.GenerateToken(user);

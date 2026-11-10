@@ -78,7 +78,9 @@ namespace PlaySlot.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("VenueId");
+                    b.HasIndex("VenueId", "Date", "StartTime")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 'Active'");
 
                     b.ToTable("Bookings");
                 });

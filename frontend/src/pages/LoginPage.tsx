@@ -97,7 +97,7 @@ export default function LoginPage() {
                   required
                   autoComplete="email"
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm transition-shadow"
-                  placeholder="admin@playslot.uz"
+                  placeholder="name@example.com"
                 />
               </div>
             </div>

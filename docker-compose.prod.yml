@@ -4,13 +4,13 @@
 # Что делает:
 #  • подключает backend и frontend к внешней сети `proxy` (там же живёт Caddy);
 #  • переводит backend в Production;
-#  • секреты (POSTGRES_PASSWORD, JWT_KEY) берёт из .env рядом с этим файлом.
+#  • секреты (POSTGRES_PASSWORD, JWT_KEY, ADMIN_PASSWORD) берёт из .env рядом с этим файлом.
 #
 # Публичные порты из базового compose привязаны к 127.0.0.1 (loopback), поэтому
 # снаружи недоступны и здесь их не трогаем — Compose всё равно не даёт «очистить»
 # список портов оверлеем. Наружу торчит только Caddy из corpdev/infra.
 #
-# Маршрутизацию делает Caddy: /api/* → backend:8080, всё остальное → frontend:80.
+# Маршрутизацию делает Caddy: /api/* → backend:8080, всё остальное → frontend:8080.
 services:
   db:
     container_name: playslot-db
@@ -30,6 +30,8 @@ services:
       # Telegram-уведомления (опционально).
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
       Telegram__AdminChatId: ${TELEGRAM_ADMIN_CHAT_ID:-}
+      Seed__AdminEmail: ${ADMIN_EMAIL:-admin@playslot.uz}
+      Seed__AdminPassword: ${ADMIN_PASSWORD:-}
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:8080"
     networks:

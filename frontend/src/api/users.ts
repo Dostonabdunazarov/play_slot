@@ -6,4 +6,7 @@ export const getUsers = () => api.get<User[]>('/users').then((r) => r.data)
 export const createUser = (data: CreateUserRequest) =>
   api.post<User>('/users', data).then((r) => r.data)
 
+export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
+  api.put('/users/me/password', data)
+
 export const deleteUser = (id: string) => api.delete(`/users/${id}`)

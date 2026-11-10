@@ -36,6 +36,9 @@ public class AppDbContext : DbContext
             e.Property(x => x.PrepaymentAmount).HasColumnType("decimal(18,2)");
             e.HasOne(x => x.Venue).WithMany(v => v.Bookings).HasForeignKey(x => x.VenueId);
             e.HasOne(x => x.User).WithMany(u => u.Bookings).HasForeignKey(x => x.UserId);
+            e.HasIndex(x => new { x.VenueId, x.Date, x.StartTime })
+                .IsUnique()
+                .HasFilter("\"Status\" = 'Active'");
         });
     }
 }

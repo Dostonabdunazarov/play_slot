@@ -34,6 +34,8 @@ services:
       # Telegram-уведомления о бронях (опционально; пусто — уведомления отключены).
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
       Telegram__AdminChatId: ${TELEGRAM_ADMIN_CHAT_ID:-}
+      Seed__AdminEmail: ${ADMIN_EMAIL:-admin@playslot.uz}
+      Seed__AdminPassword: ${ADMIN_PASSWORD:-Admin123!}
       ASPNETCORE_ENVIRONMENT: "Development"
     depends_on:
       db:
@@ -41,7 +43,7 @@ services:
 
   frontend:
     build: ./frontend
-    ports: ["127.0.0.1:3000:80"]
+    ports: ["127.0.0.1:3000:8080"]
     depends_on: [backend]
 
 volumes:

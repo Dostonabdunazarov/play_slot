@@ -109,6 +109,12 @@ export default {
       user: 'Пользователь',
     },
     noUsers: 'Пользователи не найдены',
+    changePassword: 'Сменить пароль',
+    currentPassword: 'Текущий пароль',
+    newPassword: 'Новый пароль',
+    passwordHint: 'Минимум 10 символов',
+    passwordChanged: 'Пароль изменён',
+    passwordError: 'Не удалось сменить пароль. Проверьте текущий пароль',
   },
   schedule: {
     title: 'Расписание',

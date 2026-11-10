@@ -6,18 +6,27 @@ namespace PlaySlot.Infrastructure.Data;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(AppDbContext context)
+    public static async Task SeedAsync(AppDbContext context, string? adminEmail, string? adminPassword, bool isProduction)
     {
         await context.Database.MigrateAsync();
 
         if (!await context.Users.AnyAsync())
         {
+            if (string.IsNullOrWhiteSpace(adminEmail))
+                throw new InvalidOperationException(
+                    "Seed__AdminEmail must be set to create the initial admin account.");
+
+            if (string.IsNullOrEmpty(adminPassword) || (isProduction && adminPassword.Length < 12))
+                throw new InvalidOperationException(
+                    "Seed__AdminPassword must be set (>= 12 chars in production) to create the initial admin account. " +
+                    "Set it via the ADMIN_PASSWORD environment variable / .env file.");
+
             context.Users.Add(new User
             {
                 FullName = "Administrator",
-                Email = "admin@playslot.uz",
+                Email = adminEmail.Trim(),
                 Phone = "+998901234567",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
                 Role = UserRole.Admin
             });
         }
