@@ -23,6 +23,7 @@ public class StatsController(AppDbContext db) : ControllerBase
         var bookings = await db.Bookings
             .Include(b => b.Venue)
             .Where(b => b.Date >= fromDate && b.Date <= toDate)
+            .Where(b => b.Status == BookingStatus.Active || b.Status == BookingStatus.Cancelled)
             .ToListAsync();
 
         var active = bookings.Where(b => b.Status == BookingStatus.Active).ToList();

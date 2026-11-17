@@ -6,7 +6,8 @@ public class Booking
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid VenueId { get; set; }
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
+    public Guid? BookingRequestId { get; set; }
     public string ClientName { get; set; } = string.Empty;
     public string ClientPhone { get; set; } = string.Empty;
     public DateOnly Date { get; set; }
@@ -21,5 +22,6 @@ public class Booking
     public DateTime? CancelledAt { get; set; }
 
     public Venue Venue { get; set; } = null!;
-    public User User { get; set; } = null!;
+    public User? User { get; set; }
+    public BookingRequest? BookingRequest { get; set; }
 }

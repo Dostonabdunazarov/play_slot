@@ -1,10 +1,10 @@
 namespace PlaySlot.Application.DTOs.Bookings;
 
 public record BookingDto(
-    Guid Id, Guid VenueId, string VenueName, Guid UserId,
+    Guid Id, Guid VenueId, string VenueName, Guid? UserId,
     string CreatedByName,
     string ClientName, string ClientPhone,
     DateOnly Date, TimeOnly StartTime, TimeOnly EndTime,
     decimal TotalAmount, decimal? PrepaymentAmount,
     string PaymentStatus, string? Notes, string Status,
-    DateTime CreatedAt);
+    DateTime CreatedAt, Guid? BookingRequestId);

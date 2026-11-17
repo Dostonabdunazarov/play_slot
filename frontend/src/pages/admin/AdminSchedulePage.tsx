@@ -13,7 +13,7 @@ import {
   isSameMonth,
   isToday,
 } from 'date-fns'
-import { CalendarDays, ChevronLeft, ChevronRight, LayoutGrid, Phone, Plus, Warehouse } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Hourglass, LayoutGrid, Phone, Plus, Warehouse } from 'lucide-react'
 import { getVenues } from '../../api/venues'
 import { getBookingsByVenueAndDate, getAllBookings } from '../../api/bookings'
 import { dateLocale, formatDate, hhmm, hourLabel, phoneLink } from '../../utils/format'
@@ -96,7 +96,7 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
   venues.forEach((v, i) => {
     const m = new Map<number, Booking>()
     queries[i].data?.forEach((b) => {
-      if (b.status === 'Active') m.set(parseInt(b.startTime.substring(0, 2)), b)
+      if (b.status === 'Active' || b.status === 'Pending') m.set(parseInt(b.startTime.substring(0, 2)), b)
     })
     bookingMap.set(v.id, m)
   })
@@ -154,7 +154,16 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
                     const booking = bookingMap.get(v.id)?.get(hour)
                     return (
                       <td key={v.id} className="px-1 py-1">
-                        {booking ? (
+                        {booking?.status === 'Pending' ? (
+                          <button
+                            type="button"
+                            onClick={() => booking.bookingRequestId && navigate(`/requests/${booking.bookingRequestId}`)}
+                            className="hatch flex h-11 w-full items-center gap-2 rounded-lg border border-wait-line px-2.5 text-left text-wait transition-colors duration-150 hover:border-wait-dot"
+                          >
+                            <Hourglass className="size-3.5 shrink-0" />
+                            <span className="truncate text-[13px] font-semibold">{booking.clientName}</span>
+                          </button>
+                        ) : booking ? (
                           <button
                             type="button"
                             onClick={() => setOpenBooking(booking)}

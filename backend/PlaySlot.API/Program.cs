@@ -61,6 +61,8 @@ builder.Services.AddScoped<ITokenService>(sp => new TokenService(jwtKey, jwtIssu
 // Notifications (Telegram) — no-op unless Telegram__BotToken / Telegram__AdminChatId are set.
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<INotificationService, TelegramNotificationService>();
+builder.Services.AddScoped<BookingRequestService>();
+builder.Services.AddHostedService<BookingRequestExpiryService>();
 
 // CORS — wide open in development; restricted to configured origins in production.
 // Set `Cors__AllowedOrigins` as a comma/semicolon-separated list (e.g. "https://play.hypex.site").
@@ -103,6 +105,7 @@ builder.Services.AddRateLimiter(opt =>
     opt.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     AddIpLimiter(opt, "login", 10, TimeSpan.FromMinutes(5));
     AddIpLimiter(opt, "password", 10, TimeSpan.FromMinutes(5));
+    AddIpLimiter(opt, "guest-request", 5, TimeSpan.FromMinutes(10));
 });
 
 var app = builder.Build();

@@ -13,6 +13,9 @@ public class Venue
     public TimeOnly CloseTime { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;
+    public string PaymentDetails { get; set; } = string.Empty;
+    public int? PrepaymentPercent { get; set; }
+    public decimal? PrepaymentFixed { get; set; }
 
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

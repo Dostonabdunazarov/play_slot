@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 380 470"><defs><clipPath id="ballClip"><circle cx="200" cy="96" r="37"/></clipPath></defs><circle cx="200" cy="200" r="178" fill="#ffffff" stroke="#0f4d3f" stroke-width="14"/>
+  <path d="M138,140 H262 L250,212 Q242,250 214,264 L210,292 H190 L186,264 Q158,250 150,212 Z" fill="#0f4d3f"/>
+  <path d="M160,150 H172 L178,232 Q168,230 164,220 Z" fill="#ffffff"/>
+  <path d="M146,146 L104,136 L116,196 Q124,222 152,238 L156,214 Q138,204 132,184 L126,160 L144,164 Z" fill="#0f4d3f"/>
+  <path d="M146,146 L104,136 L116,196 Q124,222 152,238 L156,214 Q138,204 132,184 L126,160 L144,164 Z" fill="#0f4d3f" transform="translate(400 0) scale(-1 1)"/>
+  <path d="M174,292 H226 L222,306 H178 Z" fill="#0f4d3f"/>
+  <path d="M166,310 H234 L242,338 H158 Z" fill="#0f4d3f"/>
+  <path d="M176,316 H186 L182,332 H172 Z" fill="#ffffff"/>
+  <rect x="146" y="342" width="108" height="16" rx="2" fill="#0f4d3f"/>
+
+  <circle cx="200" cy="96" r="40" fill="#ffffff" stroke="#0f4d3f" stroke-width="7"/>
+  <g clip-path="url(#ballClip)">
+    <path d="M200.0,84.0 L211.4,92.3 L207.1,105.7 L192.9,105.7 L188.6,92.3 Z" fill="#0f4d3f"/>
+    <path d="M227.0,58.8 L231.0,71.1 L220.6,78.7 L210.1,71.1 L214.1,58.8 Z" fill="#0f4d3f"/><path d="M243.7,110.2 L233.3,117.8 L222.8,110.2 L226.8,97.9 L239.8,97.9 Z" fill="#0f4d3f"/><path d="M200.0,142.0 L189.5,134.4 L193.5,122.1 L206.5,122.1 L210.5,134.4 Z" fill="#0f4d3f"/><path d="M156.3,110.2 L160.2,97.9 L173.2,97.9 L177.2,110.2 L166.7,117.8 Z" fill="#0f4d3f"/><path d="M173.0,58.8 L185.9,58.8 L189.9,71.1 L179.4,78.7 L169.0,71.1 Z" fill="#0f4d3f"/>
+    <line x1="200.0" y1="84.0" x2="200.0" y2="70.0" stroke="#0f4d3f" stroke-width="3" stroke-linecap="round"/><line x1="211.4" y1="92.3" x2="224.7" y2="88.0" stroke="#0f4d3f" stroke-width="3" stroke-linecap="round"/><line x1="207.1" y1="105.7" x2="215.3" y2="117.0" stroke="#0f4d3f" stroke-width="3" stroke-linecap="round"/><line x1="192.9" y1="105.7" x2="184.7" y2="117.0" stroke="#0f4d3f" stroke-width="3" stroke-linecap="round"/><line x1="188.6" y1="92.3" x2="175.3" y2="88.0" stroke="#0f4d3f" stroke-width="3" stroke-linecap="round"/>
+  </g>
+<g transform="translate(200 468) scale(1.18)" fill="none" stroke="#0f4d3f" stroke-linejoin="miter" stroke-linecap="butt"><path d="M6,0 V-42.5" transform="translate(-135.0 0)" stroke-width="11"/><path d="M0.5,-42.5 H34" transform="translate(-135.0 0)" stroke-width="11"/><path d="M6,-23 H27" transform="translate(-135.0 0)" stroke-width="10"/><path d="M6,-48 V-17 Q6,-5.5 20,-5.5 Q34,-5.5 34,-17 V-48" transform="translate(-91.0 0)" stroke-width="11"/><path d="M0,-42.5 H40" transform="translate(-43.0 0)" stroke-width="11"/><path d="M20,-42 V0" transform="translate(-43.0 0)" stroke-width="11"/><path d="M31,-38 Q28,-42.5 18,-42.5 Q6,-42.5 6,-34 Q6,-27 18,-24 Q30.5,-21 30.5,-13.5 Q30.5,-5.5 18,-5.5 Q8,-5.5 5,-10" transform="translate(5.0 0)" stroke-width="11"/><path d="M5,0 L21,-42 L37,0" transform="translate(49.0 0)" stroke-width="11"/><path d="M12,-16 H30" transform="translate(49.0 0)" stroke-width="9"/><path d="M6,-48 V-5.5 H35" transform="translate(99.0 0)" stroke-width="11"/></g></svg>

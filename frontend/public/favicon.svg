@@ -1,14 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#166534"/>
-  <g transform="translate(32 32)">
-    <circle r="20" fill="#ffffff"/>
-    <g fill="#166534">
-      <!-- центральный пятиугольник -->
-      <polygon points="0,-7 6.66,-2.16 4.12,5.66 -4.12,5.66 -6.66,-2.16"/>
-      <!-- лучи-грани к краю мяча -->
-      <path d="M0,-7 L0,-18 M6.66,-2.16 L17,-6.5 M4.12,5.66 L10.5,15 M-4.12,5.66 L-10.5,15 M-6.66,-2.16 L-17,-6.5"
-            stroke="#166534" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    </g>
-    <circle r="20" fill="none" stroke="#166534" stroke-width="2.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 380 380"><defs><clipPath id="ballClip"><circle cx="200" cy="96" r="37"/></clipPath></defs><circle cx="200" cy="200" r="190" fill="#0f4d3f"/><g transform="translate(200 214) scale(1.12) translate(-200 -214)">
+  <path d="M138,140 H262 L250,212 Q242,250 214,264 L210,292 H190 L186,264 Q158,250 150,212 Z" fill="#ffffff"/>
+  <path d="M160,150 H172 L178,232 Q168,230 164,220 Z" fill="#0f4d3f"/>
+  <path d="M146,146 L104,136 L116,196 Q124,222 152,238 L156,214 Q138,204 132,184 L126,160 L144,164 Z" fill="#ffffff"/>
+  <path d="M146,146 L104,136 L116,196 Q124,222 152,238 L156,214 Q138,204 132,184 L126,160 L144,164 Z" fill="#ffffff" transform="translate(400 0) scale(-1 1)"/>
+  <path d="M174,292 H226 L222,306 H178 Z" fill="#ffffff"/>
+  <path d="M166,310 H234 L242,338 H158 Z" fill="#ffffff"/>
+  <path d="M176,316 H186 L182,332 H172 Z" fill="#0f4d3f"/>
+  <rect x="146" y="342" width="108" height="16" rx="2" fill="#ffffff"/>
+
+  <circle cx="200" cy="96" r="40" fill="#0f4d3f" stroke="#ffffff" stroke-width="7"/>
+  <g clip-path="url(#ballClip)">
+    <path d="M200.0,84.0 L211.4,92.3 L207.1,105.7 L192.9,105.7 L188.6,92.3 Z" fill="#ffffff"/>
+    <path d="M227.0,58.8 L231.0,71.1 L220.6,78.7 L210.1,71.1 L214.1,58.8 Z" fill="#ffffff"/><path d="M243.7,110.2 L233.3,117.8 L222.8,110.2 L226.8,97.9 L239.8,97.9 Z" fill="#ffffff"/><path d="M200.0,142.0 L189.5,134.4 L193.5,122.1 L206.5,122.1 L210.5,134.4 Z" fill="#ffffff"/><path d="M156.3,110.2 L160.2,97.9 L173.2,97.9 L177.2,110.2 L166.7,117.8 Z" fill="#ffffff"/><path d="M173.0,58.8 L185.9,58.8 L189.9,71.1 L179.4,78.7 L169.0,71.1 Z" fill="#ffffff"/>
+    <line x1="200.0" y1="84.0" x2="200.0" y2="70.0" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/><line x1="211.4" y1="92.3" x2="224.7" y2="88.0" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/><line x1="207.1" y1="105.7" x2="215.3" y2="117.0" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/><line x1="192.9" y1="105.7" x2="184.7" y2="117.0" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/><line x1="188.6" y1="92.3" x2="175.3" y2="88.0" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
   </g>
-</svg>
+</g></svg>

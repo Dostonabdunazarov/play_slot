@@ -49,3 +49,10 @@ export function paidAmount(b: Booking): number {
 export function remainingAmount(b: Booking): number {
   return b.paymentStatus === 'FullyPaid' ? 0 : b.totalAmount - (b.prepaymentAmount ?? 0)
 }
+
+export function formatPhone(phone: string): string {
+  const d = phone.replace(/\D/g, '')
+  if (d.length === 12 && d.startsWith('998'))
+    return `+998 ${d.slice(3, 5)} ${d.slice(5, 8)} ${d.slice(8, 10)} ${d.slice(10)}`
+  return phone
+}

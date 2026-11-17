@@ -28,6 +28,9 @@ namespace PlaySlot.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BookingRequestId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("CancelledAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -68,7 +71,7 @@ namespace PlaySlot.Infrastructure.Migrations
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("VenueId")
@@ -76,13 +79,114 @@ namespace PlaySlot.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BookingRequestId");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("VenueId", "Date", "StartTime")
                         .IsUnique()
-                        .HasFilter("\"Status\" = 'Active'");
+                        .HasFilter("\"Status\" IN ('Active', 'Pending')");
 
                     b.ToTable("Bookings");
+                });
+
+            modelBuilder.Entity("PlaySlot.Domain.Entities.BookingRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ClientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ClientPhone")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("HoursCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("PublicToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<long?>("TelegramChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TelegramLinkToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("VenueId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecidedByUserId");
+
+                    b.HasIndex("PublicToken")
+                        .IsUnique();
+
+                    b.HasIndex("TelegramLinkToken")
+                        .IsUnique();
+
+                    b.HasIndex("VenueId");
+
+                    b.HasIndex("ClientPhone", "Status");
+
+                    b.HasIndex("Status", "ExpiresAt");
+
+                    b.ToTable("BookingRequests");
                 });
 
             modelBuilder.Entity("PlaySlot.Domain.Entities.User", b =>
@@ -156,9 +260,20 @@ namespace PlaySlot.Infrastructure.Migrations
                     b.Property<TimeOnly>("OpenTime")
                         .HasColumnType("time without time zone");
 
+                    b.Property<string>("PaymentDetails")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("PrepaymentFixed")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("PrepaymentPercent")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("PricePerHour")
                         .HasColumnType("decimal(18,2)");
@@ -170,11 +285,15 @@ namespace PlaySlot.Infrastructure.Migrations
 
             modelBuilder.Entity("PlaySlot.Domain.Entities.Booking", b =>
                 {
+                    b.HasOne("PlaySlot.Domain.Entities.BookingRequest", "BookingRequest")
+                        .WithMany("Bookings")
+                        .HasForeignKey("BookingRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("PlaySlot.Domain.Entities.User", "User")
                         .WithMany("Bookings")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("PlaySlot.Domain.Entities.Venue", "Venue")
                         .WithMany("Bookings")
@@ -182,9 +301,34 @@ namespace PlaySlot.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("BookingRequest");
+
                     b.Navigation("User");
 
                     b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("PlaySlot.Domain.Entities.BookingRequest", b =>
+                {
+                    b.HasOne("PlaySlot.Domain.Entities.User", "DecidedBy")
+                        .WithMany()
+                        .HasForeignKey("DecidedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("PlaySlot.Domain.Entities.Venue", "Venue")
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DecidedBy");
+
+                    b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("PlaySlot.Domain.Entities.BookingRequest", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 
             modelBuilder.Entity("PlaySlot.Domain.Entities.User", b =>

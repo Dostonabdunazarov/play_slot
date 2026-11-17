@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PlaySlot.API.Services;
 using PlaySlot.Application.DTOs.Bookings;
 using PlaySlot.Application.Interfaces;
 using PlaySlot.Domain.Entities;
@@ -16,23 +17,7 @@ namespace PlaySlot.API.Controllers;
 [Authorize]
 public class BookingsController(AppDbContext db, INotificationService notifications) : ControllerBase
 {
-    // The business operates in Uzbekistan (UTC+5). IANA id works on Linux/macOS
-    // and modern Windows; fall back to a fixed +5 offset if the tz db is absent.
-    private static readonly TimeZoneInfo Tz = ResolveTashkentTz();
-
-    private static TimeZoneInfo ResolveTashkentTz()
-    {
-        foreach (var id in new[] { "Asia/Tashkent", "Uzbekistan Standard Time" })
-        {
-            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
-            catch (TimeZoneNotFoundException) { }
-            catch (InvalidTimeZoneException) { }
-        }
-        return TimeZoneInfo.CreateCustomTimeZone("UZT", TimeSpan.FromHours(5), "Uzbekistan Time", "UZT");
-    }
-
-    private static DateTime NowInTashkent() =>
-        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Tz);
+    private static DateTime NowInTashkent() => TashkentClock.Now();
 
     private static BookingDto ToDto(Booking b) =>
         new(b.Id, b.VenueId, b.Venue.Name, b.UserId,
@@ -41,7 +26,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
             b.Date, b.StartTime, b.EndTime,
             b.TotalAmount, b.PrepaymentAmount,
             b.PaymentStatus.ToString(), b.Notes, b.Status.ToString(),
-            b.CreatedAt);
+            b.CreatedAt, b.BookingRequestId);
 
     // Public: guests (not logged in) may view a venue's schedule to see which
     // slots are busy. Personal details are masked for anyone who isn't the admin
@@ -53,7 +38,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         var bookings = await db.Bookings
             .Include(b => b.Venue)
             .Include(b => b.User)
-            .Where(b => b.VenueId == venueId && b.Date == date && b.Status == BookingStatus.Active)
+            .Where(b => b.VenueId == venueId && b.Date == date && (b.Status == BookingStatus.Active || b.Status == BookingStatus.Pending))
             .OrderBy(b => b.StartTime)
             .ToListAsync();
 
@@ -62,25 +47,30 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         var isAdmin = User.IsInRole("Admin");
         var currentUserId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : (Guid?)null;
 
+        var isStaff = currentUserId is not null;
+
         return Ok(bookings.Select(b =>
-            isAdmin || b.UserId == currentUserId ? ToDto(b) : ToMaskedDto(b)));
+            isAdmin || (currentUserId is not null && b.UserId == currentUserId) || (isStaff && b.Status == BookingStatus.Pending)
+                ? ToDto(b)
+                : ToMaskedDto(b, isStaff)));
     }
 
     // Slot is shown as busy but personal details are stripped.
-    private static BookingDto ToMaskedDto(Booking b) =>
-        new(b.Id, b.VenueId, b.Venue.Name, Guid.Empty,
+    private static BookingDto ToMaskedDto(Booking b, bool isStaff) =>
+        new(b.Id, b.VenueId, b.Venue.Name, null,
             "",
             "Занято", "",
             b.Date, b.StartTime, b.EndTime,
             0, 0,
             PaymentStatus.Unpaid.ToString(), null, b.Status.ToString(),
-            b.CreatedAt);
+            b.CreatedAt, isStaff ? b.BookingRequestId : null);
 
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll([FromQuery] Guid? venueId, [FromQuery] DateOnly? date)
     {
-        var query = db.Bookings.Include(b => b.Venue).Include(b => b.User).AsQueryable();
+        var query = db.Bookings.Include(b => b.Venue).Include(b => b.User)
+            .Where(b => b.Status == BookingStatus.Active || b.Status == BookingStatus.Cancelled);
 
         if (venueId.HasValue)
             query = query.Where(b => b.VenueId == venueId.Value);
@@ -98,7 +88,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         var bookings = await db.Bookings
             .Include(b => b.Venue)
             .Include(b => b.User)
-            .Where(b => b.UserId == userId)
+            .Where(b => b.UserId == userId && (b.Status == BookingStatus.Active || b.Status == BookingStatus.Cancelled))
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
         return Ok(bookings.Select(ToDto));
@@ -129,7 +119,7 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         var conflict = await db.Bookings.AnyAsync(b =>
             b.VenueId == request.VenueId &&
             b.Date == request.Date &&
-            b.Status == BookingStatus.Active &&
+            (b.Status == BookingStatus.Active || b.Status == BookingStatus.Pending) &&
             b.StartTime < endTime &&
             b.EndTime > request.StartTime);
 
@@ -169,11 +159,13 @@ public class BookingsController(AppDbContext db, INotificationService notificati
     }
 
     [HttpPatch("{id:guid}/payment")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "User,Admin")]
     public async Task<IActionResult> UpdatePayment(Guid id, [FromBody] UpdatePaymentRequest request)
     {
         var booking = await db.Bookings.Include(b => b.Venue).Include(b => b.User).FirstOrDefaultAsync(b => b.Id == id);
         if (booking is null) return NotFound();
+        if (booking.Status != BookingStatus.Active)
+            return BadRequest(new { message = "Payment can only be updated for active bookings" });
 
         if (!Enum.TryParse<PaymentStatus>(request.PaymentStatus, true, out var status))
             return BadRequest(new { message = "Invalid payment status. Use: Unpaid, Prepaid, FullyPaid" });
@@ -196,6 +188,8 @@ public class BookingsController(AppDbContext db, INotificationService notificati
         if (booking is null) return NotFound();
         if (booking.Status == BookingStatus.Cancelled)
             return BadRequest(new { message = "Booking is already cancelled" });
+        if (booking.Status != BookingStatus.Active)
+            return BadRequest(new { message = "Only active bookings can be cancelled" });
 
         booking.Status = BookingStatus.Cancelled;
         booking.CancelledAt = DateTime.UtcNow;

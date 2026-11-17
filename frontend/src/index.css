@@ -27,6 +27,15 @@
   --color-due: #b4232b;
   --color-due-soft: #fdeceb;
 
+  --color-wait: #2c5aa0;
+  --color-wait-dot: #4a7fd4;
+  --color-wait-soft: #e9f0fb;
+  --color-wait-line: #b9cdee;
+
+  --color-tg: #2a8bcd;
+  --color-tg-hover: #2379b4;
+  --color-tg-soft: #e8f3fb;
+
   --shadow-raise: 0 1px 2px rgb(16 26 20 / 0.05), 0 2px 8px rgb(16 26 20 / 0.04);
   --shadow-float: 0 8px 24px rgb(16 26 20 / 0.12), 0 2px 6px rgb(16 26 20 / 0.06);
 
@@ -99,6 +108,10 @@
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
+}
+
+@utility hatch {
+  background-image: repeating-linear-gradient(135deg, var(--color-wait-soft) 0 7px, #f6f9fe 7px 14px);
 }
 
 @utility no-scrollbar {

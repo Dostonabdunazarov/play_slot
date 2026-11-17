@@ -1,5 +1,6 @@
 export type Role = 'Admin' | 'User'
-export type BookingStatus = 'Active' | 'Cancelled'
+export type BookingStatus = 'Active' | 'Cancelled' | 'Pending' | 'Rejected' | 'Expired'
+export type RequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Expired' | 'CancelledByGuest'
 export type PaymentStatus = 'Unpaid' | 'Prepaid' | 'FullyPaid'
 
 export interface User {
@@ -23,13 +24,16 @@ export interface Venue {
   closeTime: string
   isActive: boolean
   createdAt: string
+  paymentDetails?: string | null
+  prepaymentPercent?: number | null
+  prepaymentFixed?: number | null
 }
 
 export interface Booking {
   id: string
   venueId: string
   venueName: string
-  userId: string
+  userId: string | null
   createdByName: string
   clientName: string
   clientPhone: string
@@ -43,6 +47,66 @@ export interface Booking {
   status: BookingStatus
   createdAt: string
   cancelledAt?: string
+  bookingRequestId?: string | null
+}
+
+export interface GuestRequest {
+  token: string
+  status: RequestStatus
+  venueId: string
+  venueName: string
+  venueAddress: string
+  venuePhone: string
+  date: string
+  startTime: string
+  endTime: string
+  hours: number
+  totalAmount: number
+  clientName: string
+  createdAt: string
+  expiresAt: string
+  decidedAt?: string | null
+  rejectReason?: string | null
+  language: string
+  telegramLinked: boolean
+  telegramUrl?: string | null
+  paymentDetails?: string | null
+  prepaymentAmount?: number | null
+}
+
+export interface StaffRequest {
+  id: string
+  status: RequestStatus
+  venueId: string
+  venueName: string
+  date: string
+  startTime: string
+  endTime: string
+  hours: number
+  totalAmount: number
+  prepaymentAmount?: number | null
+  clientName: string
+  clientPhone: string
+  comment?: string | null
+  language: string
+  createdAt: string
+  expiresAt: string
+  decidedAt?: string | null
+  decidedByName?: string | null
+  rejectReason?: string | null
+  telegramLinked: boolean
+}
+
+export interface CreateGuestRequest {
+  venueId: string
+  date: string
+  startTime: string
+  hours: number
+  clientName: string
+  clientPhone: string
+  comment?: string
+  language: string
+  website?: string
 }
 
 export interface LoginRequest {
@@ -65,6 +129,9 @@ export interface CreateVenueRequest {
   openTime: string
   closeTime: string
   isActive?: boolean
+  paymentDetails?: string | null
+  prepaymentPercent?: number | null
+  prepaymentFixed?: number | null
 }
 
 export interface CreateBookingRequest {

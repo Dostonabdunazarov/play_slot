@@ -65,6 +65,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
+          <img src="/logo.svg" alt="Futsal" width={112} height={138} className="mb-6 h-auto w-28" />
           <h1 className="text-[26px] font-bold tracking-[-0.02em] text-ink">{t('auth.loginTitle')}</h1>
           <p className="mt-1.5 text-[15px] text-ink-3">{t('auth.loginSubtitle')}</p>
 
@@ -119,7 +120,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-ink-3">BronSlot © {new Date().getFullYear()}</p>
+        <p className="text-center text-xs text-ink-3">Futsal © {new Date().getFullYear()}</p>
       </div>
     </div>
   )

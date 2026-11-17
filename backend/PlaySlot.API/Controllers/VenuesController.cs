@@ -11,9 +11,11 @@ namespace PlaySlot.API.Controllers;
 [Route("api/venues")]
 public class VenuesController(AppDbContext db) : ControllerBase
 {
-    private static VenueDto ToDto(Venue v) =>
+    private VenueDto ToDto(Venue v) =>
         new(v.Id, v.Name, v.Address, v.Phone, v.Description, v.ImageUrl,
-            v.PricePerHour, v.OpenTime, v.CloseTime, v.IsActive, v.CreatedAt);
+            v.PricePerHour, v.OpenTime, v.CloseTime, v.IsActive, v.CreatedAt,
+            User.IsInRole("Admin") ? v.PaymentDetails : null,
+            v.PrepaymentPercent, v.PrepaymentFixed);
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -46,7 +48,10 @@ public class VenuesController(AppDbContext db) : ControllerBase
             ImageUrl = request.ImageUrl,
             PricePerHour = request.PricePerHour,
             OpenTime = request.OpenTime,
-            CloseTime = request.CloseTime
+            CloseTime = request.CloseTime,
+            PaymentDetails = request.PaymentDetails?.Trim() ?? string.Empty,
+            PrepaymentPercent = request.PrepaymentPercent,
+            PrepaymentFixed = request.PrepaymentFixed
         };
 
         db.Venues.Add(venue);
@@ -70,6 +75,9 @@ public class VenuesController(AppDbContext db) : ControllerBase
         venue.OpenTime = request.OpenTime;
         venue.CloseTime = request.CloseTime;
         venue.IsActive = request.IsActive;
+        venue.PaymentDetails = request.PaymentDetails?.Trim() ?? string.Empty;
+        venue.PrepaymentPercent = request.PrepaymentPercent;
+        venue.PrepaymentFixed = request.PrepaymentFixed;
 
         await db.SaveChangesAsync();
         return Ok(ToDto(venue));

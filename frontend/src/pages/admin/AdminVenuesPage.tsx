@@ -13,6 +13,7 @@ import {
   IconButton,
   ListSkeleton,
   PageHeader,
+  Segmented,
   Sheet,
   inputClass,
   textareaClass,
@@ -37,9 +38,21 @@ function VenueModal({
 }) {
   const { t } = useTranslation()
   const [form, setForm] = useState(initial)
+  const [prepayMode, setPrepayMode] = useState<'none' | 'percent' | 'fixed'>(
+    initial.prepaymentFixed ? 'fixed' : initial.prepaymentPercent ? 'percent' : 'none'
+  )
 
-  function set(field: keyof CreateVenueRequest, value: string | number) {
+  function set(field: keyof CreateVenueRequest, value: string | number | null) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  function changePrepayMode(mode: 'none' | 'percent' | 'fixed') {
+    setPrepayMode(mode)
+    setForm((f) => ({
+      ...f,
+      prepaymentPercent: mode === 'percent' ? f.prepaymentPercent ?? 50 : null,
+      prepaymentFixed: mode === 'fixed' ? f.prepaymentFixed ?? f.pricePerHour : null,
+    }))
   }
 
   return (
@@ -126,6 +139,65 @@ function VenueModal({
               </select>
             </Field>
           ))}
+        </div>
+
+        <Field label={t('venues.paymentDetailsLabel')} htmlFor="venue-payment" hint={t('venues.paymentDetailsHint')}>
+          <textarea
+            id="venue-payment"
+            value={form.paymentDetails ?? ''}
+            onChange={(e) => set('paymentDetails', e.target.value)}
+            rows={3}
+            maxLength={1000}
+            placeholder="Humo 9860 0000 0000 0000&#10;Рустамов Ж."
+            className={`${textareaClass} tabular`}
+          />
+        </Field>
+
+        <div>
+          <div className="mb-1.5 text-sm font-medium text-ink-2">{t('venues.prepaymentLabel')}</div>
+          <Segmented
+            label={t('venues.prepaymentLabel')}
+            value={prepayMode}
+            onChange={changePrepayMode}
+            options={[
+              { value: 'none', label: t('venues.prepaymentNone') },
+              { value: 'percent', label: t('venues.prepaymentPercent') },
+              { value: 'fixed', label: t('venues.prepaymentFixed') },
+            ]}
+          />
+          {prepayMode === 'percent' && (
+            <div className="mt-3">
+              <Field label={t('venues.prepaymentPercentInput')} htmlFor="venue-prepay-percent">
+                <input
+                  id="venue-prepay-percent"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={100}
+                  required
+                  value={form.prepaymentPercent ?? ''}
+                  onChange={(e) => set('prepaymentPercent', e.target.value ? parseInt(e.target.value) : null)}
+                  className={`${inputClass} tabular`}
+                />
+              </Field>
+            </div>
+          )}
+          {prepayMode === 'fixed' && (
+            <div className="mt-3">
+              <Field label={t('venues.prepaymentFixedInput')} htmlFor="venue-prepay-fixed">
+                <input
+                  id="venue-prepay-fixed"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  required
+                  value={form.prepaymentFixed ?? ''}
+                  onChange={(e) => set('prepaymentFixed', e.target.value ? parseFloat(e.target.value) : null)}
+                  className={`${inputClass} tabular`}
+                />
+              </Field>
+            </div>
+          )}
         </div>
       </form>
     </Sheet>
@@ -256,6 +328,9 @@ export default function AdminVenuesPage() {
             openTime: modal.venue.openTime,
             closeTime: modal.venue.closeTime,
             isActive: modal.venue.isActive,
+            paymentDetails: modal.venue.paymentDetails ?? '',
+            prepaymentPercent: modal.venue.prepaymentPercent ?? null,
+            prepaymentFixed: modal.venue.prepaymentFixed ?? null,
           } : EMPTY}
           onClose={() => setModal({ open: false, venue: null })}
           onSave={handleSave}

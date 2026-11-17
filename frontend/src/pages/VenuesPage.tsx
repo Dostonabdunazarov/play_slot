@@ -1,14 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Clock, MapPin } from 'lucide-react'
+import { ChevronRight, Clock, Hourglass, MapPin } from 'lucide-react'
 import { getVenues } from '../api/venues'
+import { getGuestRequests } from '../api/bookingRequests'
+import { useAuthStore } from '../store/authStore'
+import { useRequestTokens } from '../utils/guestRequests'
 import { formatMoney, hhmm } from '../utils/format'
 import { EmptyState, PageHeader, Skeleton } from '../components/ui'
 
 export default function VenuesPage() {
   const { t } = useTranslation()
   const { data: venues, isLoading } = useQuery({ queryKey: ['venues'], queryFn: getVenues })
+  const loggedIn = useAuthStore((s) => s.isAuthenticated())
+  const tokens = useRequestTokens()
+  const { data: myRequests } = useQuery({
+    queryKey: ['guest-requests', tokens],
+    queryFn: () => getGuestRequests(tokens),
+    enabled: !loggedIn && tokens.length > 0,
+    refetchInterval: 60_000,
+  })
+  const pendingMine = myRequests?.filter((r) => r.status === 'Pending').length ?? 0
 
   return (
     <div>
@@ -16,6 +28,19 @@ export default function VenuesPage() {
         title={t('venues.title')}
         description={venues?.length ? t('venues.count', { count: venues.length }) : undefined}
       />
+
+      {!loggedIn && pendingMine > 0 && (
+        <Link
+          to={pendingMine === 1 ? `/r/${myRequests!.find((r) => r.status === 'Pending')!.token}` : '/my-requests'}
+          className="mb-4 flex items-center gap-3 rounded-2xl border border-wait-line bg-wait-soft px-4 py-3 text-wait transition-colors hover:border-wait-dot"
+        >
+          <Hourglass className="size-4.5 shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1 text-[15px] font-semibold">
+            {t('guest.pendingBanner', { count: pendingMine })}
+          </span>
+          <ChevronRight className="size-5 shrink-0" aria-hidden />
+        </Link>
+      )}
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label={t('common.loading')}>

@@ -1,10 +1,12 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
 import {
   BarChart3,
   CalendarDays,
   ClipboardList,
+  Inbox,
   LogIn,
   LogOut,
   MapPin,
@@ -13,6 +15,8 @@ import {
   Warehouse,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import { getPendingCount } from '../api/bookingRequests'
+import { useRequestTokens } from '../utils/guestRequests'
 import Logo from './Logo'
 
 interface NavItem {
@@ -20,25 +24,51 @@ interface NavItem {
   label: string
   short: string
   icon: LucideIcon
+  badge?: number
+}
+
+function usePendingCount() {
+  const loggedIn = useAuthStore((s) => s.isAuthenticated())
+  const { data } = useQuery({
+    queryKey: ['pending-count'],
+    queryFn: getPendingCount,
+    enabled: loggedIn,
+    refetchInterval: 30_000,
+  })
+  return loggedIn ? data ?? 0 : 0
 }
 
 function useNavItems(): NavItem[] {
   const { t } = useTranslation()
   const { isAdmin, isAuthenticated } = useAuthStore()
+  const pending = usePendingCount()
+  const tokens = useRequestTokens()
 
   if (!isAuthenticated()) {
-    return [{ to: '/venues', label: t('nav.venues'), short: t('nav.venues'), icon: MapPin }]
+    const items: NavItem[] = [{ to: '/venues', label: t('nav.venues'), short: t('nav.venues'), icon: MapPin }]
+    if (tokens.length)
+      items.push({ to: '/my-requests', label: t('nav.myRequests'), short: t('nav.myRequests'), icon: Ticket })
+    return items
+  }
+  const requests: NavItem = {
+    to: '/requests',
+    label: t('nav.requests'),
+    short: t('nav.short.requests'),
+    icon: Inbox,
+    badge: pending,
   }
   if (isAdmin()) {
     return [
+      requests,
       { to: '/admin/schedule', label: t('nav.adminSchedule'), short: t('nav.short.schedule'), icon: CalendarDays },
       { to: '/admin/bookings', label: t('nav.adminBookings'), short: t('nav.short.bookings'), icon: ClipboardList },
       { to: '/admin/dashboard', label: t('nav.adminDashboard'), short: t('nav.short.dashboard'), icon: BarChart3 },
-      { to: '/admin/venues', label: t('nav.short.venues'), short: t('nav.short.venues'), icon: Warehouse },
+      { to: '/admin/venues', label: t('nav.venues'), short: t('nav.short.venues'), icon: Warehouse },
       { to: '/admin/users', label: t('nav.adminUsers'), short: t('nav.short.users'), icon: Users },
     ]
   }
   return [
+    requests,
     { to: '/venues', label: t('nav.venues'), short: t('nav.venues'), icon: MapPin },
     { to: '/my-bookings', label: t('nav.myBookings'), short: t('nav.short.myBookings'), icon: Ticket },
   ]
@@ -92,12 +122,12 @@ export function Sidebar() {
   return (
     <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line bg-surface lg:flex">
       <div className="flex h-16 items-center px-5">
-        <Link to="/" aria-label="BronSlot">
+        <Link to="/" aria-label="Futsal">
           <Logo />
         </Link>
       </div>
       <nav className="flex-1 space-y-0.5 px-3 pt-2" aria-label={t('nav.main')}>
-        {items.map(({ to, label, icon: Icon }) => (
+        {items.map(({ to, label, icon: Icon, badge }) => (
           <NavLink
             key={to}
             to={to}
@@ -110,7 +140,12 @@ export function Sidebar() {
             {({ isActive }) => (
               <>
                 <Icon className={`size-4.5 ${isActive ? 'text-brand' : 'text-ink-3'}`} strokeWidth={2} />
-                {label}
+                <span className="flex-1">{label}</span>
+                {!!badge && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-due px-1.5 text-[11px] font-bold text-white tabular">
+                    {badge}
+                  </span>
+                )}
               </>
             )}
           </NavLink>
@@ -157,14 +192,25 @@ export function TopBar() {
   const { t } = useTranslation()
   const loggedIn = useAuthStore((s) => s.isAuthenticated())
   const handleLogout = useLogout()
+  const tokens = useRequestTokens()
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur-sm lg:hidden">
       <div className="flex h-14 items-center justify-between gap-3 px-4">
-        <Link to="/" aria-label="BronSlot">
+        <Link to="/" aria-label="Futsal">
           <Logo />
         </Link>
         <div className="flex items-center gap-1.5">
+          {!loggedIn && tokens.length > 0 && (
+            <Link
+              to="/my-requests"
+              aria-label={t('nav.myRequests')}
+              className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+            >
+              <Ticket className="size-4.5" />
+              <span className="hidden sm:inline">{t('nav.myRequests')}</span>
+            </Link>
+          )}
           <LangButton />
           {loggedIn ? (
             <button
@@ -203,7 +249,7 @@ export function TabBar() {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
     >
       <div className="mx-auto flex max-w-xl">
-        {items.map(({ to, short, icon: Icon }) => (
+        {items.map(({ to, short, icon: Icon, badge }) => (
           <NavLink
             key={to}
             to={to}
@@ -216,13 +262,18 @@ export function TabBar() {
             {({ isActive }) => (
               <>
                 <span
-                  className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-150 ${
+                  className={`relative flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-150 ${
                     isActive ? 'bg-brand-soft' : ''
                   }`}
                 >
                   <Icon className="size-5" strokeWidth={isActive ? 2.25 : 2} />
+                  {!!badge && (
+                    <span className="absolute -top-1 right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-due px-1 text-[10px] font-bold text-white tabular">
+                      {badge}
+                    </span>
+                  )}
                 </span>
-                <span className="max-w-full truncate px-1">{short}</span>
+                <span className="max-w-full truncate px-0.5">{short}</span>
               </>
             )}
           </NavLink>

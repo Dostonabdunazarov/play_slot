@@ -8,4 +8,8 @@ public interface INotificationService
 {
     Task NotifyBookingCreatedAsync(Booking booking, CancellationToken ct = default);
     Task NotifyBookingCancelledAsync(Booking booking, CancellationToken ct = default);
+    Task NotifyRequestCreatedAsync(BookingRequest request, CancellationToken ct = default);
+    Task NotifyRequestCancelledByGuestAsync(BookingRequest request, CancellationToken ct = default);
+    Task NotifyGuestStatusAsync(BookingRequest request, CancellationToken ct = default);
+    string? GuestBotLink(string linkToken);
 }

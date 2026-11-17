@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -5,7 +6,9 @@ import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { Phone, Ticket } from 'lucide-react'
 import { formatDate, hhmm, phoneLink } from '../utils/format'
-import { getMyBookings, cancelBooking } from '../api/bookings'
+import { getMyBookings, cancelBooking, updatePayment } from '../api/bookings'
+import PaymentModal from '../components/PaymentModal'
+import type { Booking, PaymentStatus } from '../types'
 import { Button, Card, EmptyState, ListSkeleton, MoneyLine, PageHeader, PaymentBadge, Tag } from '../components/ui'
 import { buttonClass } from '../components/styles'
 
@@ -15,6 +18,19 @@ export default function MyBookingsPage() {
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ['myBookings'],
     queryFn: getMyBookings,
+  })
+
+  const [paymentModal, setPaymentModal] = useState<Booking | null>(null)
+
+  const paymentMutation = useMutation({
+    mutationFn: ({ id, status, prepayment }: { id: string; status: PaymentStatus; prepayment?: number }) =>
+      updatePayment(id, { paymentStatus: status, prepaymentAmount: prepayment }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myBookings'] })
+      setPaymentModal(null)
+      toast.success(t('bookings.paymentSaved'))
+    },
+    onError: () => toast.error(t('common.error')),
   })
 
   const cancelMutation = useMutation({
@@ -89,6 +105,11 @@ export default function MyBookingsPage() {
                       <Phone className="size-4" />
                     </a>
                     {booking.status === 'Active' && (
+                      <Button variant="secondary" size="sm" onClick={() => setPaymentModal(booking)}>
+                        {t('bookings.updatePayment')}
+                      </Button>
+                    )}
+                    {booking.status === 'Active' && (
                       <Button
                         variant="danger"
                         size="sm"
@@ -106,6 +127,15 @@ export default function MyBookingsPage() {
             )
           })}
         </div>
+      )}
+
+      {paymentModal && (
+        <PaymentModal
+          booking={paymentModal}
+          onClose={() => setPaymentModal(null)}
+          onSave={(status, prepayment) => paymentMutation.mutate({ id: paymentModal.id, status, prepayment })}
+          loading={paymentMutation.isPending}
+        />
       )}
     </div>
   )

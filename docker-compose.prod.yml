@@ -30,6 +30,9 @@ services:
       # Telegram-уведомления (опционально).
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
       Telegram__AdminChatId: ${TELEGRAM_ADMIN_CHAT_ID:-}
+      Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
+      Telegram__WebhookSecret: ${TELEGRAM_WEBHOOK_SECRET:-}
+      App__PublicBaseUrl: ${PUBLIC_BASE_URL:-https://play.hypex.site}
       Seed__AdminEmail: ${ADMIN_EMAIL:-admin@playslot.uz}
       Seed__AdminPassword: ${ADMIN_PASSWORD:-}
       ASPNETCORE_ENVIRONMENT: "Production"

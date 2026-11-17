@@ -11,6 +11,10 @@ import VenuesPage from './pages/VenuesPage'
 import VenueDetailPage from './pages/VenueDetailPage'
 import MyBookingsPage from './pages/MyBookingsPage'
 import NewBookingPage from './pages/NewBookingPage'
+import GuestRequestPage from './pages/GuestRequestPage'
+import MyRequestsPage from './pages/MyRequestsPage'
+import RequestsPage from './pages/RequestsPage'
+import RequestDetailPage from './pages/RequestDetailPage'
 import AdminVenuesPage from './pages/admin/AdminVenuesPage'
 import AdminBookingsPage from './pages/admin/AdminBookingsPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
@@ -54,6 +58,24 @@ export default function App() {
             {/* Public: guests can browse venues and view schedules. */}
             <Route path="/venues" element={<VenuesPage />} />
             <Route path="/venues/:id" element={<VenueDetailPage />} />
+            <Route path="/r/:token" element={<GuestRequestPage />} />
+            <Route path="/my-requests" element={<MyRequestsPage />} />
+            <Route
+              path="/requests"
+              element={
+                <ProtectedRoute>
+                  <RequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/requests/:id"
+              element={
+                <ProtectedRoute>
+                  <RequestDetailPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Require login: booking management. */}
             <Route

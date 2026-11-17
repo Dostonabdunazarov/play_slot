@@ -4,4 +4,5 @@ public record VenueDto(
     Guid Id, string Name, string Address, string Phone,
     string Description, string ImageUrl,
     decimal PricePerHour, TimeOnly OpenTime, TimeOnly CloseTime,
-    bool IsActive, DateTime CreatedAt);
+    bool IsActive, DateTime CreatedAt,
+    string? PaymentDetails, int? PrepaymentPercent, decimal? PrepaymentFixed);

@@ -74,3 +74,18 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f backend
 # проверить, что контейнеры в сети proxy
 docker network inspect proxy
 ```
+
+## Telegram: заявки гостей
+
+1. Создать бота у @BotFather, добавить его в группу персонала.
+2. Заполнить в `.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID` (id группы), `TELEGRAM_BOT_USERNAME` (без @), `TELEGRAM_WEBHOOK_SECRET` (`openssl rand -hex 32`), `PUBLIC_BASE_URL`.
+3. Один раз зарегистрировать webhook, чтобы бот получал `/start` от гостей:
+
+```bash
+curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=$PUBLIC_BASE_URL/api/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET" \
+  -d 'allowed_updates=["message"]'
+```
+
+Проверить: `curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo"`.
