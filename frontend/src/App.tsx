@@ -24,7 +24,22 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: '14px',
+            background: '#101a14',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 500,
+            padding: '10px 14px',
+          },
+          success: { iconTheme: { primary: '#4ade80', secondary: '#101a14' } },
+          error: { iconTheme: { primary: '#f87171', secondary: '#101a14' } },
+        }}
+      />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

@@ -2,9 +2,22 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, X, User, Eye, EyeOff, KeyRound } from 'lucide-react'
+import { Eye, EyeOff, KeyRound, Plus, Trash2, Users } from 'lucide-react'
 import { phoneLink } from '../../utils/format'
 import { getUsers, createUser, deleteUser, changePassword } from '../../api/users'
+import { useAuthStore } from '../../store/authStore'
+import {
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  IconButton,
+  ListSkeleton,
+  PageHeader,
+  Sheet,
+  Tag,
+  inputClass,
+} from '../../components/ui'
 import type { CreateUserRequest, Role } from '../../types'
 
 const EMPTY: CreateUserRequest = { fullName: '', phone: '', email: '', password: '', role: 'User' }
@@ -27,84 +40,93 @@ function CreateUserModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold">{t('users.addUser')}</h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
-        </div>
-        <form onSubmit={(e) => { e.preventDefault(); onSave(form) }} className="p-5 space-y-4" autoComplete="off">
-          {([
-            ['fullName', t('users.fullName'), 'text', 'off'],
-            ['email', t('users.email'), 'email', 'off'],
-            ['phone', t('users.phone'), 'text', 'off'],
-          ] as [keyof CreateUserRequest, string, string, string][]).map(([field, label, type, ac]) => (
-            <div key={field}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-              <input
-                required
-                type={type}
-                name={field}
-                autoComplete={ac}
-                value={form[field] as string}
-                onChange={(e) => set(field, e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-          ))}
+    <Sheet
+      title={t('users.addUser')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" size="lg" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" form="user-form" size="lg" className="flex-1" loading={loading}>
+            {t('common.create')}
+          </Button>
+        </>
+      }
+    >
+      <form id="user-form" onSubmit={(e) => { e.preventDefault(); onSave(form) }} className="space-y-4" autoComplete="off">
+        {([
+          ['fullName', t('users.fullName'), 'text', 'off'],
+          ['email', t('users.email'), 'email', 'off'],
+          ['phone', t('users.phone'), 'tel', 'off'],
+        ] as [keyof CreateUserRequest, string, string, string][]).map(([field, label, type, ac]) => (
+          <Field key={field} label={label} htmlFor={`user-${field}`} required>
+            <input
+              id={`user-${field}`}
+              required
+              type={type}
+              name={field}
+              autoComplete={ac}
+              value={form[field] as string}
+              onChange={(e) => set(field, e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+        ))}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.password')}</label>
-            <div className="relative">
-              <input
-                required
-                minLength={10}
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                autoComplete="new-password"
-                value={form.password}
-                onChange={(e) => set('password', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                tabIndex={-1}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
-                aria-label={showPassword ? t('users.hidePassword') : t('users.showPassword')}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.role')}</label>
-            <select
-              value={form.role}
-              onChange={(e) => set('role', e.target.value as Role)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="User">{t('users.roles.user')}</option>
-              <option value="Admin">{t('users.roles.admin')}</option>
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-1">
+        <Field label={t('users.password')} htmlFor="user-password" hint={t('users.passwordHint')} required>
+          <div className="relative">
+            <input
+              id="user-password"
+              required
+              minLength={10}
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={(e) => set('password', e.target.value)}
+              className={`${inputClass} pr-12`}
+            />
             <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-medium py-2 rounded-lg transition-colors text-sm"
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              tabIndex={-1}
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-ink-3 transition-colors hover:text-ink"
+              aria-label={showPassword ? t('users.hidePassword') : t('users.showPassword')}
             >
-              {loading ? t('common.loading') : t('common.create')}
-            </button>
-            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              {t('common.cancel')}
+              {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+        </Field>
+
+        <fieldset>
+          <legend className="mb-1.5 text-sm font-medium text-ink-2">{t('users.role')}</legend>
+          <div className="grid grid-cols-2 gap-2">
+            {(['User', 'Admin'] as Role[]).map((r) => {
+              const on = form.role === r
+              return (
+                <label
+                  key={r}
+                  className={`flex h-11 cursor-pointer items-center justify-center rounded-xl border text-sm font-semibold transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-brand ${
+                    on ? 'border-brand bg-brand-soft text-ink' : 'border-line-strong text-ink-2 hover:bg-sunken'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={r}
+                    checked={on}
+                    onChange={() => set('role', r)}
+                    className="sr-only"
+                  />
+                  {t(`users.roles.${r.toLowerCase()}`)}
+                </label>
+              )
+            })}
+          </div>
+        </fieldset>
+      </form>
+    </Sheet>
   )
 }
 
@@ -122,58 +144,57 @@ function ChangePasswordModal({
   const [newPassword, setNewPassword] = useState('')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold">{t('users.changePassword')}</h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
-        </div>
-        <form onSubmit={(e) => { e.preventDefault(); onSave({ currentPassword, newPassword }) }} className="p-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.currentPassword')}</label>
-            <input
-              required
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('users.newPassword')}</label>
-            <input
-              required
-              minLength={10}
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-            <p className="text-xs text-gray-400 mt-1">{t('users.passwordHint')}</p>
-          </div>
-          <div className="flex gap-3 pt-1">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-medium py-2 rounded-lg transition-colors text-sm"
-            >
-              {loading ? t('common.loading') : t('common.save')}
-            </button>
-            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              {t('common.cancel')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Sheet
+      title={t('users.changePassword')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" size="lg" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" form="password-form" size="lg" className="flex-1" loading={loading}>
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="password-form"
+        onSubmit={(e) => { e.preventDefault(); onSave({ currentPassword, newPassword }) }}
+        className="space-y-4"
+      >
+        <Field label={t('users.currentPassword')} htmlFor="current-password" required>
+          <input
+            id="current-password"
+            required
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label={t('users.newPassword')} htmlFor="new-password" hint={t('users.passwordHint')} required>
+          <input
+            id="new-password"
+            required
+            minLength={10}
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </form>
+    </Sheet>
   )
 }
 
 export default function AdminUsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const currentUserId = useAuthStore((s) => s.user?.id)
   const [modalOpen, setModalOpen] = useState(false)
   const [passwordModalOpen, setPasswordModalOpen] = useState(false)
 
@@ -181,7 +202,7 @@ export default function AdminUsersPage() {
 
   const createMutation = useMutation({
     mutationFn: createUser,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); setModalOpen(false); toast.success(t('common.create')) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); setModalOpen(false); toast.success(t('users.created')) },
     onError: () => toast.error(t('common.error')),
   })
 
@@ -193,82 +214,64 @@ export default function AdminUsersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); toast.success(t('common.delete')) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); toast.success(t('users.deleted')) },
     onError: () => toast.error(t('common.error')),
   })
 
-  if (isLoading) return <div className="text-center py-20 text-gray-500">{t('common.loading')}</div>
-
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('nav.adminUsers')}</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPasswordModalOpen(true)}
-            className="flex items-center gap-2 border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <KeyRound className="w-4 h-4" />
-            {t('users.changePassword')}
-          </button>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4 text-white" />
-            {t('users.addUser')}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title={t('nav.adminUsers')}
+        description={users.length ? t('users.count', { count: users.length }) : undefined}
+        actions={
+          <>
+            <Button variant="secondary" icon={<KeyRound className="size-4" />} onClick={() => setPasswordModalOpen(true)}>
+              {t('users.changePassword')}
+            </Button>
+            <Button icon={<Plus className="size-4" />} onClick={() => setModalOpen(true)}>
+              {t('users.addUser')}
+            </Button>
+          </>
+        }
+      />
 
-      {!users.length ? (
-        <div className="text-center py-20 text-gray-500">{t('users.noUsers')}</div>
+      {isLoading ? (
+        <ListSkeleton rows={4} className="h-16 rounded-2xl" />
+      ) : !users.length ? (
+        <Card>
+          <EmptyState icon={<Users className="size-6" />} title={t('users.noUsers')} />
+        </Card>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide">
-              <tr>
-                <th className="text-left px-5 py-3">{t('users.fullName')}</th>
-                <th className="text-left px-5 py-3 hidden sm:table-cell">{t('users.email')}</th>
-                <th className="text-left px-5 py-3 hidden md:table-cell">{t('users.phone')}</th>
-                <th className="text-left px-5 py-3">{t('users.role')}</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="w-4 h-4 text-green-700" />
-                      </div>
-                      <span className="font-medium text-gray-900">{user.fullName}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-gray-600 hidden sm:table-cell">{user.email}</td>
-                  <td className="px-5 py-3 hidden md:table-cell"><a href={phoneLink(user.phone)} className="text-green-700 hover:underline">{user.phone}</a></td>
-                  <td className="px-5 py-3">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {t(`users.roles.${user.role.toLowerCase()}`)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <button
-                      onClick={() => { if (confirm(t('users.deleteConfirm'))) deleteMutation.mutate(user.id) }}
-                      disabled={deleteMutation.isPending}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Card className="overflow-hidden">
+          <ul className="divide-y divide-line">
+            {users.map((user) => (
+              <li key={user.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sunken text-sm font-bold text-ink-2">
+                  {user.fullName.trim().charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[1.2fr_1.4fr_1fr] sm:items-center sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-semibold text-ink">{user.fullName}</span>
+                    {user.id === currentUserId && <span className="text-xs text-ink-3">({t('users.you')})</span>}
+                  </div>
+                  <div className="truncate text-sm text-ink-3">{user.email}</div>
+                  <a href={phoneLink(user.phone)} className="block truncate text-sm text-ink-2 tabular hover:text-brand">
+                    {user.phone}
+                  </a>
+                </div>
+                <span className="flex shrink-0 sm:w-32 sm:justify-end"><Tag>{t(`users.roles.${user.role.toLowerCase()}`)}</Tag></span>
+                <IconButton
+                  label={t('common.delete')}
+                  tone="danger"
+                  disabled={deleteMutation.isPending || user.id === currentUserId}
+                  onClick={() => { if (confirm(t('users.deleteConfirm'))) deleteMutation.mutate(user.id) }}
+                >
+                  <Trash2 className="size-4.5" />
+                </IconButton>
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
 
       {passwordModalOpen && (

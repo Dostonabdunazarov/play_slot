@@ -2,9 +2,21 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, X, Clock, MapPin, Phone } from 'lucide-react'
-import { phoneLink } from '../../utils/format'
+import { Clock, MapPin, Pencil, Phone, Plus, Trash2, Warehouse } from 'lucide-react'
+import { formatMoney, hhmm, phoneLink } from '../../utils/format'
 import { getVenues, createVenue, updateVenue, deleteVenue } from '../../api/venues'
+import {
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  IconButton,
+  ListSkeleton,
+  PageHeader,
+  Sheet,
+  inputClass,
+  textareaClass,
+} from '../../components/ui'
 import type { Venue, CreateVenueRequest } from '../../types'
 
 const EMPTY: CreateVenueRequest = {
@@ -31,97 +43,92 @@ function VenueModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold">{initial.name ? t('venues.editVenue') : t('venues.addVenue')}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5 text-gray-400" /></button>
-        </div>
-        <form
-          onSubmit={(e) => { e.preventDefault(); onSave(form) }}
-          className="p-6 space-y-4"
-        >
-          {([
-            ['name', t('venues.name'), 'text'],
-            ['address', t('venues.address'), 'text'],
-            ['phone', t('venues.phone'), 'text'],
-            ['imageUrl', t('venues.imageUrl'), 'url'],
-          ] as [keyof CreateVenueRequest, string, string][]).map(([field, label, type]) => (
-            <div key={field}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-              <input
-                required={field !== 'imageUrl'}
-                type={type}
-                value={form[field] as string}
-                onChange={(e) => set(field, e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-          ))}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('venues.description')}</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => set('description', e.target.value)}
-              rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('venues.price')}</label>
+    <Sheet
+      title={initial.name ? t('venues.editVenue') : t('venues.addVenue')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" size="lg" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" form="venue-form" size="lg" className="flex-1" loading={loading}>
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="venue-form"
+        onSubmit={(e) => { e.preventDefault(); onSave(form) }}
+        className="space-y-4"
+      >
+        {([
+          ['name', t('venues.name'), 'text'],
+          ['address', t('venues.address'), 'text'],
+          ['phone', t('venues.phone'), 'tel'],
+          ['imageUrl', t('venues.imageUrl'), 'url'],
+        ] as [keyof CreateVenueRequest, string, string][]).map(([field, label, type]) => (
+          <Field key={field} label={label} htmlFor={`venue-${field}`} required={field !== 'imageUrl'}>
             <input
-              required
-              type="number"
-              min={0}
-              value={form.pricePerHour}
-              onChange={(e) => set('pricePerHour', parseFloat(e.target.value))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              id={`venue-${field}`}
+              required={field !== 'imageUrl'}
+              type={type}
+              value={form[field] as string}
+              onChange={(e) => set(field, e.target.value)}
+              className={inputClass}
             />
-          </div>
+          </Field>
+        ))}
 
-          <div className="grid grid-cols-2 gap-4">
-            {(['openTime', 'closeTime'] as const).map((field) => (
-              <div key={field}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {field === 'openTime' ? t('venues.openTime') : t('venues.closeTime')}
-                </label>
-                <select
-                  required
-                  value={form[field].substring(0, 5)}
-                  onChange={(e) => set(field, e.target.value + ':00')}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                >
-                  {Array.from({ length: 25 }, (_, h) => {
-                    const hh = String(h).padStart(2, '0')
-                    const val = `${hh}:00`
-                    return <option key={val} value={val}>{val}</option>
-                  })}
-                </select>
-              </div>
-            ))}
-          </div>
+        <Field label={t('venues.description')} htmlFor="venue-description">
+          <textarea
+            id="venue-description"
+            value={form.description}
+            onChange={(e) => set('description', e.target.value)}
+            rows={2}
+            className={textareaClass}
+          />
+        </Field>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg transition-colors"
+        <Field label={t('venues.priceInput')} htmlFor="venue-price" required>
+          <input
+            id="venue-price"
+            required
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={form.pricePerHour}
+            onChange={(e) => set('pricePerHour', parseFloat(e.target.value))}
+            className={`${inputClass} tabular`}
+          />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          {(['openTime', 'closeTime'] as const).map((field) => (
+            <Field
+              key={field}
+              label={field === 'openTime' ? t('venues.openTime') : t('venues.closeTime')}
+              htmlFor={`venue-${field}`}
+              required
             >
-              {loading ? t('common.loading') : t('common.save')}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-            >
-              {t('common.cancel')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              <select
+                id={`venue-${field}`}
+                required
+                value={form[field].substring(0, 5)}
+                onChange={(e) => set(field, e.target.value + ':00')}
+                className={`${inputClass} tabular`}
+              >
+                {Array.from({ length: 25 }, (_, h) => {
+                  const hh = String(h).padStart(2, '0')
+                  const val = `${hh}:00`
+                  return <option key={val} value={val}>{val}</option>
+                })}
+              </select>
+            </Field>
+          ))}
+        </div>
+      </form>
+    </Sheet>
   )
 }
 
@@ -134,19 +141,19 @@ export default function AdminVenuesPage() {
 
   const createMutation = useMutation({
     mutationFn: createVenue,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['venues'] }); setModal({ open: false, venue: null }); toast.success(t('common.save')) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['venues'] }); setModal({ open: false, venue: null }); toast.success(t('venues.saved')) },
     onError: () => toast.error(t('common.error')),
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateVenueRequest> }) => updateVenue(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['venues'] }); setModal({ open: false, venue: null }); toast.success(t('common.save')) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['venues'] }); setModal({ open: false, venue: null }); toast.success(t('venues.saved')) },
     onError: () => toast.error(t('common.error')),
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteVenue,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['venues'] }); toast.success(t('common.delete')) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['venues'] }); toast.success(t('venues.deleted')) },
     onError: () => toast.error(t('common.error')),
   })
 
@@ -159,61 +166,80 @@ export default function AdminVenuesPage() {
   }
 
   const isSaving = createMutation.isPending || updateMutation.isPending
-
-  if (isLoading) return <div className="text-center py-20 text-gray-500">{t('common.loading')}</div>
+  const addButton = (
+    <Button icon={<Plus className="size-4" />} onClick={() => setModal({ open: true, venue: null })}>
+      {t('venues.addVenue')}
+    </Button>
+  )
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('nav.adminVenues')}</h1>
-        <button
-          onClick={() => setModal({ open: true, venue: null })}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4 text-white" />
-          {t('venues.addVenue')}
-        </button>
-      </div>
+      <PageHeader
+        title={t('nav.adminVenues')}
+        description={venues.length ? t('venues.count', { count: venues.length }) : undefined}
+        actions={venues.length ? addButton : undefined}
+      />
 
-      {!venues.length ? (
-        <div className="text-center py-20 text-gray-500">{t('venues.noVenues')}</div>
+      {isLoading ? (
+        <ListSkeleton rows={3} className="h-24 rounded-2xl" />
+      ) : !venues.length ? (
+        <Card>
+          <EmptyState
+            icon={<Warehouse className="size-6" />}
+            title={t('venues.noVenues')}
+            text={t('venues.noVenuesAdminHint')}
+            action={addButton}
+          />
+        </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-2.5">
           {venues.map((venue) => (
-            <div key={venue.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-              <div className="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+            <Card key={venue.id} className="flex items-center gap-3 p-3 sm:gap-4">
+              <div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl bg-sunken sm:h-[72px] sm:w-28">
                 <img
                   src={venue.imageUrl || '/venue-placeholder.svg'}
                   onError={(e) => { e.currentTarget.src = '/venue-placeholder.svg' }}
-                  alt={venue.name}
-                  className="w-full h-full object-cover"
+                  alt=""
+                  className="size-full object-cover"
                 />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-gray-900 mb-1">{venue.name}</div>
-                <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-blue-500" />{venue.address}</span>
-                  <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-green-500" /><a href={phoneLink(venue.phone)} className="text-green-700 hover:underline">{venue.phone}</a></span>
-                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-orange-500" />{venue.openTime.substring(0, 5)}–{venue.closeTime.substring(0, 5)}</span>
-                  <span className="flex items-center gap-1">Цена за час: {venue.pricePerHour.toLocaleString()} сум</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="truncate font-bold text-ink">{venue.name}</span>
+                  <span className="shrink-0 text-sm font-semibold text-ink tabular">
+                    {formatMoney(venue.pricePerHour)}
+                    <span className="ml-1 font-normal text-ink-3">{t('venues.pricePerHour')}</span>
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-ink-3">
+                  <span className="inline-flex min-w-0 items-center gap-1">
+                    <MapPin className="size-3.5 shrink-0" />
+                    <span className="truncate">{venue.address}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 tabular">
+                    <Clock className="size-3.5" />
+                    {hhmm(venue.openTime)}–{hhmm(venue.closeTime)}
+                  </span>
+                  <a href={phoneLink(venue.phone)} className="hidden items-center gap-1 tabular hover:text-brand sm:inline-flex">
+                    <Phone className="size-3.5" />
+                    {venue.phone}
+                  </a>
                 </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button
-                  onClick={() => setModal({ open: true, venue })}
-                  className="p-2 text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
-                >
-                  <Pencil className="w-4 h-4 text-amber-500" />
-                </button>
-                <button
-                  onClick={() => { if (confirm(t('venues.deleteConfirm'))) deleteMutation.mutate(venue.id) }}
+              <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
+                <IconButton label={t('venues.editVenue')} onClick={() => setModal({ open: true, venue })}>
+                  <Pencil className="size-4.5" />
+                </IconButton>
+                <IconButton
+                  label={t('venues.deleteVenue')}
+                  tone="danger"
                   disabled={deleteMutation.isPending}
-                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  onClick={() => { if (confirm(t('venues.deleteConfirm'))) deleteMutation.mutate(venue.id) }}
                 >
-                  <Trash2 className="w-4 h-4 text-red-400" />
-                </button>
+                  <Trash2 className="size-4.5" />
+                </IconButton>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

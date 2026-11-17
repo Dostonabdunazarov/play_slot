@@ -3,13 +3,16 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Calendar, Clock } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Clock, Wallet } from 'lucide-react'
 import { getVenue } from '../api/venues'
 import { createBooking } from '../api/bookings'
 import { useAuthStore } from '../store/authStore'
+import { formatDate, formatMoney } from '../utils/format'
+import { Button, Card, Field, PageHeader, Skeleton, inputClass, textareaClass } from '../components/ui'
+import { buttonClass } from '../components/styles'
 
 export default function NewBookingPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
@@ -26,7 +29,7 @@ export default function NewBookingPage() {
   const [clientPhone, setClientPhone] = useState(user?.phone ?? '')
   const [notes, setNotes] = useState('')
 
-  const { data: venue } = useQuery({
+  const { data: venue, isLoading } = useQuery({
     queryKey: ['venue', venueId],
     queryFn: () => getVenue(venueId),
     enabled: !!venueId,
@@ -37,11 +40,11 @@ export default function NewBookingPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       queryClient.invalidateQueries({ queryKey: ['myBookings'] })
-      toast.success(t('bookings.newBooking') + ' — OK')
+      toast.success(t('bookings.created'))
       navigate(`/venues/${venueId}`)
     },
     onError: () => {
-      toast.error(t('common.error'))
+      toast.error(t('bookings.createError'))
     },
   })
 
@@ -50,91 +53,100 @@ export default function NewBookingPage() {
     mutation.mutate({ venueId, clientName, clientPhone, date, startTime, notes: notes || undefined })
   }
 
+  const back = `/venues/${venueId}`
+
   return (
-    <div className="max-w-lg">
+    <div className="mx-auto max-w-lg">
       <Link
-        to={`/venues/${venueId}`}
-        className="inline-flex items-center gap-1 text-sm text-green-700 hover:text-green-900 mb-4"
+        to={back}
+        className="-ml-2 mb-3 inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
       >
-        <ArrowLeft className="w-4 h-4 text-green-700" />
+        <ArrowLeft className="size-4" />
         {t('common.back')}
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('bookings.newBooking')}</h1>
+      <PageHeader title={t('bookings.newBooking')} />
 
-      {/* Booking summary */}
-      {venue && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 space-y-2">
-          <div className="font-semibold text-green-900">{venue.name}</div>
-          <div className="text-sm text-green-700 flex flex-wrap gap-4">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-violet-500" />
-              {date}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-orange-500" />
-              {startTime.substring(0, 5)} — {endTime.substring(0, 5)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              {venue.pricePerHour.toLocaleString()} сум / {t('venues.pricePerHour')}
-            </span>
+      {isLoading ? (
+        <Skeleton className="mb-4 h-28 rounded-2xl" />
+      ) : venue ? (
+        <Card className="mb-4 p-4">
+          <div className="text-base font-bold text-ink">{venue.name}</div>
+          <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+            <div className="rounded-xl bg-sunken px-3 py-2">
+              <dt className="flex items-center gap-1 text-xs text-ink-3">
+                <CalendarDays className="size-3.5" />
+                {t('bookings.date')}
+              </dt>
+              <dd className="mt-0.5 font-semibold text-ink">{date ? formatDate(date, i18n.language).replace(/ \d{4}$/, '') : '—'}</dd>
+            </div>
+            <div className="rounded-xl bg-sunken px-3 py-2">
+              <dt className="flex items-center gap-1 text-xs text-ink-3">
+                <Clock className="size-3.5" />
+                {t('bookings.time')}
+              </dt>
+              <dd className="mt-0.5 font-semibold text-ink tabular">
+                {startTime.substring(0, 5)}–{endTime.substring(0, 5)}
+              </dd>
+            </div>
+            <div className="rounded-xl bg-sunken px-3 py-2">
+              <dt className="flex items-center gap-1 text-xs text-ink-3">
+                <Wallet className="size-3.5" />
+                {t('bookings.price')}
+              </dt>
+              <dd className="mt-0.5 font-semibold text-ink tabular">{formatMoney(venue.pricePerHour)}</dd>
+            </div>
+          </dl>
+        </Card>
+      ) : null}
+
+      <Card className="p-4 sm:p-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Field label={t('bookings.clientName')} htmlFor="clientName" required>
+            <input
+              id="clientName"
+              required
+              autoComplete="off"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label={t('bookings.clientPhone')} htmlFor="clientPhone" required>
+            <input
+              id="clientPhone"
+              required
+              type="tel"
+              inputMode="tel"
+              autoComplete="off"
+              placeholder="+998 90 123 45 67"
+              value={clientPhone}
+              onChange={(e) => setClientPhone(e.target.value)}
+              className={`${inputClass} tabular`}
+            />
+          </Field>
+
+          <Field label={t('bookings.notes')} htmlFor="notes">
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className={textareaClass}
+            />
+          </Field>
+
+          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row">
+            <Link to={back} className={buttonClass('secondary', 'lg', 'sm:w-auto')}>
+              {t('common.cancel')}
+            </Link>
+            <Button type="submit" size="lg" loading={mutation.isPending} className="sm:flex-1">
+              {t('bookings.bookSlot')}
+            </Button>
           </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('bookings.clientName')} *
-          </label>
-          <input
-            required
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('bookings.clientPhone')} *
-          </label>
-          <input
-            required
-            value={clientPhone}
-            onChange={(e) => setClientPhone(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('bookings.notes')}
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-          />
-        </div>
-
-        <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg transition-colors"
-          >
-            {mutation.isPending ? t('common.loading') : t('bookings.bookSlot')}
-          </button>
-          <Link
-            to={`/venues/${venueId}`}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            {t('common.cancel')}
-          </Link>
-        </div>
-      </form>
+        </form>
+      </Card>
     </div>
   )
 }

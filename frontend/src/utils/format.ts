@@ -1,8 +1,17 @@
 import { parse, format } from 'date-fns'
-import { ru } from 'date-fns/locale'
+import { ru, uz } from 'date-fns/locale'
+import type { Booking } from '../types'
 
-export function formatDate(dateStr: string): string {
-  return format(parse(dateStr, 'yyyy-MM-dd', new Date()), 'd MMMM yyyy', { locale: ru })
+export function dateLocale(lang: string) {
+  return lang === 'uz' ? uz : ru
+}
+
+export function formatDate(dateStr: string, lang = 'ru'): string {
+  return format(parse(dateStr, 'yyyy-MM-dd', new Date()), 'd MMMM yyyy', { locale: dateLocale(lang) })
+}
+
+export function formatDateShort(dateStr: string, lang = 'ru'): string {
+  return format(parse(dateStr, 'yyyy-MM-dd', new Date()), 'EEEEEE, d MMM', { locale: dateLocale(lang) })
 }
 
 export function phoneLink(phone: string) {
@@ -23,4 +32,20 @@ export function formatMoney(amount: number): string {
 // Short day label for chart axes, e.g. "13.07".
 export function formatDayShort(dateStr: string): string {
   return format(parse(dateStr, 'yyyy-MM-dd', new Date()), 'dd.MM')
+}
+
+export function hhmm(time: string): string {
+  return time.substring(0, 5)
+}
+
+export function hourLabel(hour: number): string {
+  return `${String(hour).padStart(2, '0')}:00`
+}
+
+export function paidAmount(b: Booking): number {
+  return b.paymentStatus === 'FullyPaid' ? b.totalAmount : b.prepaymentAmount ?? 0
+}
+
+export function remainingAmount(b: Booking): number {
+  return b.paymentStatus === 'FullyPaid' ? 0 : b.totalAmount - (b.prepaymentAmount ?? 0)
 }

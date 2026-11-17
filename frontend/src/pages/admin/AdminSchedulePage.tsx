@@ -13,26 +13,74 @@ import {
   isSameMonth,
   isToday,
 } from 'date-fns'
-import { ChevronLeft, ChevronRight, LayoutGrid, Calendar } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, LayoutGrid, Phone, Plus, Warehouse } from 'lucide-react'
 import { getVenues } from '../../api/venues'
 import { getBookingsByVenueAndDate, getAllBookings } from '../../api/bookings'
-import { formatDate, phoneLink } from '../../utils/format'
-import type { Booking, Venue } from '../../types'
+import { dateLocale, formatDate, hhmm, hourLabel, phoneLink } from '../../utils/format'
+import DateStrip from '../../components/DateStrip'
+import {
+  Card,
+  EmptyState,
+  IconButton,
+  MoneyLine,
+  PageHeader,
+  PaymentBadge,
+  Segmented,
+  Sheet,
+  Skeleton,
+  inputClass,
+} from '../../components/ui'
+import { buttonClass, paymentDotClass } from '../../components/styles'
+import type { Booking, PaymentStatus, Venue } from '../../types'
 
 type ViewMode = 'table' | 'calendar'
 
-// ─── Table View ─────────────────────────────────────────────────────────────
-
-function paymentColor(status: string) {
-  if (status === 'FullyPaid') return 'bg-green-500 text-white'
-  if (status === 'Prepaid') return 'bg-yellow-400 text-gray-900'
-  return 'bg-gray-400 text-white'
+const cellTone: Record<PaymentStatus, string> = {
+  FullyPaid: 'bg-paid-soft hover:bg-[#d3edda]',
+  Prepaid: 'bg-pre-soft hover:bg-[#fae6b8]',
+  Unpaid: 'bg-due-soft hover:bg-[#fadad8]',
 }
+
+function BookingSheet({ booking, onClose }: { booking: Booking; onClose: () => void }) {
+  const { t, i18n } = useTranslation()
+  return (
+    <Sheet
+      title={booking.clientName}
+      onClose={onClose}
+      footer={
+        <a href={phoneLink(booking.clientPhone)} className={buttonClass('primary', 'lg', 'flex-1')}>
+          <Phone className="size-4" />
+          <span className="tabular">{booking.clientPhone}</span>
+        </a>
+      }
+    >
+      <div className="space-y-4">
+        <div className="text-sm text-ink-2">
+          <div className="font-semibold text-ink">{booking.venueName}</div>
+          <div className="tabular">
+            {formatDate(booking.date, i18n.language)} · {hhmm(booking.startTime)}–{hhmm(booking.endTime)}
+          </div>
+        </div>
+        <PaymentBadge status={booking.paymentStatus} />
+        <MoneyLine booking={booking} className="rounded-xl bg-sunken px-3 py-2.5" />
+        {booking.notes && <p className="text-sm text-ink-2">{booking.notes}</p>}
+        {booking.createdByName && (
+          <p className="text-xs text-ink-3">
+            {t('bookings.createdBy')}: {booking.createdByName}
+          </p>
+        )}
+      </div>
+    </Sheet>
+  )
+}
+
+// ─── Table View ─────────────────────────────────────────────────────────────
 
 function TableView({ date, venues }: { date: string; venues: Venue[] }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [openBooking, setOpenBooking] = useState<Booking | null>(null)
+  const [now] = useState(() => Date.now())
 
   // Load bookings for all venues on the selected date
   const queries = venues.map((v) =>
@@ -56,86 +104,101 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
   const allOpenHour = Math.min(...venues.map((v) => parseInt(v.openTime.substring(0, 2))))
   const allCloseHour = Math.max(...venues.map((v) => parseInt(v.closeTime.substring(0, 2))))
   const hours = Array.from({ length: allCloseHour - allOpenHour }, (_, i) => allOpenHour + i)
+  const loading = queries.some((q) => q.isLoading)
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm border-collapse">
-        <thead>
-          <tr>
-            <th className="w-20 text-xs text-gray-400 font-normal py-2 pr-3 text-right sticky left-0 bg-white z-10">{t('bookings.startTime')}</th>
-            {venues.map((v) => (
-              <th key={v.id} className="px-2 py-2 text-center text-xs font-semibold text-gray-700 min-w-[140px]">
-                {v.name}
+    <>
+      <div className="-mx-4 overflow-x-auto sm:mx-0">
+        <table className="min-w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr>
+              <th className="sticky top-0 left-0 z-20 w-16 border-b border-line bg-surface py-2.5 pr-2 pl-4 text-left text-xs font-semibold text-ink-3 sm:pl-0">
+                {t('bookings.time')}
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {hours.map((hour) => {
-            const timeLabel = `${String(hour).padStart(2, '0')}:00`
-            return (
-              <tr key={hour} className="border-t border-gray-50">
-                <td className="text-xs text-gray-400 pr-3 py-1 text-right sticky left-0 bg-white z-10 w-20">{timeLabel}</td>
-                {venues.map((v) => {
-                  const venueOpen = parseInt(v.openTime.substring(0, 2))
-                  const venueClose = parseInt(v.closeTime.substring(0, 2))
-                  const inRange = hour >= venueOpen && hour < venueClose
-                  if (!inRange) {
-                    return <td key={v.id} className="px-2 py-1"><div className="h-9 rounded bg-gray-50" /></td>
-                  }
-                  const booking = bookingMap.get(v.id)?.get(hour)
-                  return (
-                    <td key={v.id} className="px-2 py-1">
-                      {booking ? (
-                        <div
-                          className={`relative h-9 rounded px-2 flex items-center cursor-default ${paymentColor(booking.paymentStatus)}`}
-                          onMouseEnter={() => setHoveredId(booking.id)}
-                          onMouseLeave={() => setHoveredId(null)}
-                        >
-                          <span className="text-xs truncate">{booking.clientName}</span>
-                          {hoveredId === booking.id && (
-                            <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1 w-52 bg-gray-900 text-white text-xs rounded-lg p-2.5 shadow-xl pointer-events-none">
-                              <div className="font-semibold">{booking.clientName}</div>
-                              <a href={phoneLink(booking.clientPhone)} className="text-green-400 hover:underline">{booking.clientPhone}</a>
-                              <div className="mt-1 text-gray-400">{t(`bookings.paymentStatuses.${booking.paymentStatus.toLowerCase()}`)}</div>
-                              <div className="mt-1.5 border-t border-gray-700 pt-1.5 space-y-0.5">
-                                <div className="flex justify-between"><span className="text-gray-400">Итого:</span><span>{booking.totalAmount.toLocaleString()} сум</span></div>
-                                <div className="flex justify-between"><span className="text-green-400">Оплачено:</span><span>{(booking.paymentStatus === 'FullyPaid' ? booking.totalAmount : booking.prepaymentAmount ?? 0).toLocaleString()} сум</span></div>
-                                <div className="flex justify-between"><span className="text-red-400">Остаток:</span><span>{(booking.paymentStatus === 'FullyPaid' ? 0 : booking.totalAmount - (booking.prepaymentAmount ?? 0)).toLocaleString()} сум</span></div>
-                              </div>
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`/bookings/new?venueId=${v.id}&date=${date}&hour=${hour}`)}
-                          className="w-full h-9 rounded bg-gray-50 hover:bg-green-50 hover:border-green-300 border border-transparent transition-colors text-xs text-gray-300 hover:text-green-500"
-                        >
-                          +
-                        </button>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+              {venues.map((v) => (
+                <th
+                  key={v.id}
+                  className="sticky top-0 z-10 min-w-[148px] border-b border-line bg-surface px-1.5 py-2.5 text-left text-[13px] font-semibold text-ink"
+                >
+                  <span className="block truncate">{v.name}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {hours.map((hour) => {
+              const past = new Date(`${date}T${String(hour).padStart(2, '0')}:00:00`).getTime() < now
+              return (
+                <tr key={hour}>
+                  <td className="sticky left-0 z-10 bg-surface py-1 pr-2 pl-4 align-middle text-[13px] font-semibold text-ink-2 tabular sm:pl-0">
+                    {hourLabel(hour)}
+                  </td>
+                  {venues.map((v) => {
+                    const venueOpen = parseInt(v.openTime.substring(0, 2))
+                    const venueClose = parseInt(v.closeTime.substring(0, 2))
+                    const inRange = hour >= venueOpen && hour < venueClose
+                    if (!inRange) {
+                      return (
+                        <td key={v.id} className="px-1 py-1">
+                          <div className="h-11 rounded-lg bg-sunken/60" />
+                        </td>
+                      )
+                    }
+                    if (loading) {
+                      return (
+                        <td key={v.id} className="px-1 py-1">
+                          <Skeleton className="h-11 rounded-lg" />
+                        </td>
+                      )
+                    }
+                    const booking = bookingMap.get(v.id)?.get(hour)
+                    return (
+                      <td key={v.id} className="px-1 py-1">
+                        {booking ? (
+                          <button
+                            type="button"
+                            onClick={() => setOpenBooking(booking)}
+                            className={`flex h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left transition-colors duration-150 ${cellTone[booking.paymentStatus]}`}
+                          >
+                            <span className={`size-1.5 shrink-0 rounded-full ${paymentDotClass(booking.paymentStatus)}`} />
+                            <span className="truncate text-[13px] font-semibold text-ink">{booking.clientName}</span>
+                          </button>
+                        ) : past ? (
+                          <div className="h-11 rounded-lg border border-dashed border-line" />
+                        ) : (
+                          <button
+                            type="button"
+                            aria-label={`${v.name}, ${hourLabel(hour)} — ${t('bookings.book')}`}
+                            onClick={() => navigate(`/bookings/new?venueId=${v.id}&date=${date}&hour=${hour}`)}
+                            className="group flex h-11 w-full items-center justify-center rounded-lg border border-dashed border-line-strong text-ink-3 transition-colors duration-150 hover:border-brand hover:bg-brand-soft hover:text-brand"
+                          >
+                            <Plus className="size-4 opacity-60 group-hover:opacity-100" />
+                          </button>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {openBooking && <BookingSheet booking={openBooking} onClose={() => setOpenBooking(null)} />}
+    </>
   )
 }
 
 // ─── Calendar View ───────────────────────────────────────────────────────────
 
 function CalendarView({ venues, selectedVenueId }: { venues: Venue[]; selectedVenueId: string }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const locale = dateLocale(i18n.language)
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [expandedDay, setExpandedDay] = useState<string | null>(null)
 
-  const { data: allBookings = [] } = useQuery({
+  const { data: allBookings = [], isLoading } = useQuery({
     queryKey: ['allBookings'],
     queryFn: getAllBookings,
   })
@@ -156,119 +219,121 @@ function CalendarView({ venues, selectedVenueId }: { venues: Venue[]; selectedVe
   const startWeekday = getDay(monthStart)
   const paddingDays = startWeekday === 0 ? 6 : startWeekday - 1
 
-  const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+  const weekdays = Array.from({ length: 7 }, (_, i) =>
+    format(new Date(2024, 0, 1 + i), 'EEEEEE', { locale })
+  )
 
   const expandedVenue = venues.find((v) => v.id === selectedVenueId)
   const expandedBookings = expandedDay
     ? venueBookings.filter((b) => b.date === expandedDay)
     : []
 
-  function paymentBadge(status: string) {
-    if (status === 'FullyPaid') return 'bg-green-500'
-    if (status === 'Prepaid') return 'bg-yellow-400'
-    return 'bg-gray-400'
-  }
-
   return (
     <div>
-      {/* Month nav */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg">
-          <ChevronLeft className="w-5 h-5 text-violet-500" />
-        </button>
-        <span className="font-semibold text-gray-800 capitalize">
-          {format(currentMonth, 'LLLL yyyy')}
+      <div className="mb-3 flex items-center justify-between">
+        <IconButton label={t('schedule.prevMonth')} onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+          <ChevronLeft className="size-5" />
+        </IconButton>
+        <span className="text-base font-bold capitalize text-ink">
+          {format(currentMonth, 'LLLL yyyy', { locale })}
         </span>
-        <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg">
-          <ChevronRight className="w-5 h-5 text-violet-500" />
-        </button>
+        <IconButton label={t('schedule.nextMonth')} onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+          <ChevronRight className="size-5" />
+        </IconButton>
       </div>
 
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 mb-1">
-        {WEEKDAYS.map((d, i) => (
-          <div key={d} className={`text-center text-xs font-medium py-1 ${i >= 5 ? 'text-red-400' : 'text-gray-500'}`}>
+      <div className="mb-1 grid grid-cols-7">
+        {weekdays.map((d, i) => (
+          <div
+            key={d}
+            className={`py-1 text-center text-xs font-semibold uppercase ${i >= 5 ? 'text-due' : 'text-ink-3'}`}
+          >
             {d}
           </div>
         ))}
       </div>
 
-      {/* Days grid */}
-      <div className="grid grid-cols-7 border-l border-t border-gray-100">
+      <div className={`grid grid-cols-7 gap-1 ${isLoading ? 'opacity-50' : ''}`}>
         {Array.from({ length: paddingDays }).map((_, i) => (
-          <div key={`pad-${i}`} className="border-r border-b border-gray-100 h-16 bg-gray-50/50" />
+          <div key={`pad-${i}`} />
         ))}
         {days.map((day) => {
           const dayStr = format(day, 'yyyy-MM-dd')
           const count = countByDay.get(dayStr) ?? 0
-          const dow = getDay(day)
-          const isWeekend = dow === 0 || dow === 6
           const isExpanded = expandedDay === dayStr
+          const today = isToday(day)
 
           return (
-            <div
+            <button
               key={dayStr}
+              type="button"
+              aria-pressed={isExpanded}
               onClick={() => setExpandedDay(isExpanded ? null : dayStr)}
-              className={`border-r border-b border-gray-100 h-16 p-1.5 cursor-pointer transition-colors ${
-                isExpanded ? 'bg-green-50' : 'hover:bg-gray-50'
+              className={`flex h-14 flex-col items-center justify-center gap-1 rounded-xl border transition-colors duration-150 sm:h-16 ${
+                isExpanded
+                  ? 'border-brand bg-brand-soft'
+                  : 'border-transparent hover:bg-sunken'
               } ${!isSameMonth(day, currentMonth) ? 'opacity-30' : ''}`}
             >
-              <div className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${
-                isToday(day) ? 'bg-green-600 text-white' : isWeekend ? 'text-red-400' : 'text-gray-700'
-              }`}>
+              <span
+                className={`flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular ${
+                  today ? 'bg-brand text-white' : 'text-ink'
+                }`}
+              >
                 {format(day, 'd')}
-              </div>
-              {count > 0 && (
-                <div className="flex gap-0.5 flex-wrap">
-                  {Array.from({ length: Math.min(count, 4) }).map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  ))}
-                  {count > 4 && <span className="text-xs text-gray-400 leading-none">+{count - 4}</span>}
-                </div>
-              )}
-            </div>
+              </span>
+              <span
+                className={`h-4 min-w-4 rounded-full px-1 text-[11px] font-bold leading-4 tabular ${
+                  count ? 'bg-ink text-white' : 'text-transparent'
+                }`}
+              >
+                {count || 0}
+              </span>
+            </button>
           )
         })}
       </div>
 
-      {/* Expanded day timeline */}
       {expandedDay && (
-        <div className="mt-4 bg-white rounded-xl border border-gray-100 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="font-semibold text-gray-800">{expandedDay ? formatDate(expandedDay) : ''}</div>
-            {expandedVenue && (
-              <span className="text-xs text-green-700">{expandedVenue.name}</span>
-            )}
+        <div className="mt-4 border-t border-line pt-4">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <div className="font-bold text-ink">{formatDate(expandedDay, i18n.language)}</div>
+            {expandedVenue && <span className="truncate text-sm text-ink-3">{expandedVenue.name}</span>}
           </div>
           {!expandedBookings.length ? (
-            <p className="text-sm text-gray-400">{t('bookings.noBookings')}</p>
+            <p className="py-2 text-sm text-ink-3">{t('bookings.noBookings')}</p>
           ) : (
-            <div className="space-y-2">
+            <ul className="space-y-2">
               {expandedBookings
                 .sort((a, b) => a.startTime.localeCompare(b.startTime))
                 .map((b) => (
-                  <div key={b.id} className={`px-3 py-2 rounded-lg ${paymentBadge(b.paymentStatus)} bg-opacity-20`}>
+                  <li key={b.id} className="rounded-xl bg-sunken px-3.5 py-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${paymentBadge(b.paymentStatus)}`} />
-                      <span className="text-xs font-mono text-gray-700">{b.startTime.substring(0, 5)}–{b.endTime.substring(0, 5)}</span>
-                      <span className="text-sm font-medium text-gray-900 flex-1">{b.clientName}</span>
-                      <a href={phoneLink(b.clientPhone)} className="text-xs text-green-700 hover:underline">{b.clientPhone}</a>
+                      <span className="w-[86px] shrink-0 text-sm font-semibold text-ink tabular">
+                        {hhmm(b.startTime)}–{hhmm(b.endTime)}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{b.clientName}</span>
+                      <PaymentBadge status={b.paymentStatus} />
                     </div>
-                    <div className="flex gap-4 mt-1 ml-5 text-xs">
-                      <span className="text-gray-500">Итого: <span className="font-medium text-gray-700">{b.totalAmount.toLocaleString()} сум</span></span>
-                      <span className="text-green-700">Оплачено: <span className="font-medium">{(b.paymentStatus === 'FullyPaid' ? b.totalAmount : b.prepaymentAmount ?? 0).toLocaleString()} сум</span></span>
-                      <span className="text-red-600">Остаток: <span className="font-medium">{(b.paymentStatus === 'FullyPaid' ? 0 : b.totalAmount - (b.prepaymentAmount ?? 0)).toLocaleString()} сум</span></span>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 pl-0 text-sm sm:pl-[98px]">
+                      {!selectedVenueId && <span className="text-ink-3">{b.venueName}</span>}
+                      <a href={phoneLink(b.clientPhone)} className="text-brand tabular hover:underline">
+                        {b.clientPhone}
+                      </a>
                     </div>
-                  </div>
+                    <MoneyLine booking={b} className="mt-2 sm:pl-[98px]" />
+                  </li>
                 ))}
-            </div>
+            </ul>
           )}
           {expandedVenue && (
             <button
+              type="button"
               onClick={() => navigate(`/bookings/new?venueId=${expandedVenue.id}&date=${expandedDay}&hour=${parseInt(expandedVenue.openTime)}`)}
-              className="mt-3 text-xs text-green-700 hover:text-green-900 underline"
+              className={buttonClass('secondary', 'sm', 'mt-3')}
             >
-              + {t('bookings.newBooking')}
+              <Plus className="size-4" />
+              {t('bookings.newBooking')}
             </button>
           )}
         </div>
@@ -287,67 +352,54 @@ export default function AdminSchedulePage() {
 
   const { data: venues = [], isLoading } = useQuery({ queryKey: ['venues'], queryFn: getVenues })
 
-  if (isLoading) return <div className="text-center py-20 text-gray-500">{t('common.loading')}</div>
-
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('schedule.title')}</h1>
+      <PageHeader
+        title={t('schedule.title')}
+        actions={
+          <Segmented
+            label={t('schedule.view')}
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { value: 'table', label: <><LayoutGrid className="size-4" />{t('schedule.tableView')}</> },
+              { value: 'calendar', label: <><CalendarDays className="size-4" />{t('schedule.calendarView')}</> },
+            ]}
+          />
+        }
+      />
 
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Date (table view only) */}
-          {viewMode === 'table' && (
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+      {isLoading ? (
+        <Skeleton className="h-[520px] rounded-2xl" />
+      ) : !venues.length ? (
+        <Card>
+          <EmptyState icon={<Warehouse className="size-6" />} title={t('venues.noVenues')} text={t('venues.noVenuesHint')} />
+        </Card>
+      ) : (
+        <Card className="p-4 lg:p-5">
+          {viewMode === 'table' ? (
+            <>
+              <div className="mb-4">
+                <DateStrip value={selectedDate} onChange={setSelectedDate} allowPast />
+              </div>
+              <TableView date={selectedDate} venues={venues} />
+            </>
+          ) : (
+            <>
+              <select
+                value={selectedVenueId}
+                onChange={(e) => setSelectedVenueId(e.target.value)}
+                aria-label={t('bookings.venue')}
+                className={`${inputClass} mb-4 sm:max-w-xs`}
+              >
+                <option value="">{t('schedule.allVenues')}</option>
+                {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+              <CalendarView venues={venues} selectedVenueId={selectedVenueId} />
+            </>
           )}
-
-          {/* Venue filter (calendar view) */}
-          {viewMode === 'calendar' && (
-            <select
-              value={selectedVenueId}
-              onChange={(e) => setSelectedVenueId(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">{t('schedule.allVenues')}</option>
-              {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
-          )}
-
-          {/* View toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                viewMode === 'table' ? 'bg-white shadow-sm text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4 text-blue-500" />
-              {t('schedule.tableView')}
-            </button>
-            <button
-              onClick={() => setViewMode('calendar')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                viewMode === 'calendar' ? 'bg-white shadow-sm text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Calendar className="w-4 h-4 text-violet-500" />
-              {t('schedule.calendarView')}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        {viewMode === 'table' ? (
-          <TableView date={selectedDate} venues={venues} />
-        ) : (
-          <CalendarView venues={venues} selectedVenueId={selectedVenueId} />
-        )}
-      </div>
+        </Card>
+      )}
     </div>
   )
 }

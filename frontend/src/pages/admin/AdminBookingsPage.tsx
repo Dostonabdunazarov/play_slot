@@ -2,25 +2,25 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Calendar, Clock, Phone, X, UserCircle } from 'lucide-react'
+import { ClipboardList, Phone, UserRound, X } from 'lucide-react'
 import { getAllBookings, cancelBooking, updatePayment } from '../../api/bookings'
-import { formatDate, phoneLink } from '../../utils/format'
+import { formatDate, formatMoney, hhmm, phoneLink } from '../../utils/format'
 import { getVenues } from '../../api/venues'
+import {
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  ListSkeleton,
+  MoneyLine,
+  PageHeader,
+  PaymentBadge,
+  Sheet,
+  Tag,
+  inputClass,
+} from '../../components/ui'
+import { paymentDotClass } from '../../components/styles'
 import type { Booking, PaymentStatus } from '../../types'
-
-function PaymentBadge({ status }: { status: PaymentStatus }) {
-  const { t } = useTranslation()
-  const map: Record<PaymentStatus, string> = {
-    FullyPaid: 'bg-green-100 text-green-800',
-    Prepaid: 'bg-yellow-100 text-yellow-800',
-    Unpaid: 'bg-gray-100 text-gray-700',
-  }
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${map[status]}`}>
-      {t(`bookings.paymentStatuses.${status.toLowerCase()}`)}
-    </span>
-  )
-}
 
 function PaymentModal({
   booking,
@@ -33,85 +33,98 @@ function PaymentModal({
   onSave: (status: PaymentStatus, prepayment?: number) => void
   loading: boolean
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [status, setStatus] = useState<PaymentStatus>(booking.paymentStatus)
   const [prepayment, setPrepayment] = useState<string>(booking.prepaymentAmount?.toString() ?? '')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold">{t('bookings.updatePayment')}</h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
-        </div>
-        <div className="p-5 space-y-4">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">{booking.clientName}</span> · {formatDate(booking.date)} · {booking.startTime.substring(0, 5)}
+    <Sheet
+      title={t('bookings.updatePayment')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" size="lg" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            size="lg"
+            className="flex-1"
+            loading={loading}
+            onClick={() => onSave(status, prepayment ? parseFloat(prepayment) : undefined)}
+          >
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="rounded-xl bg-sunken px-3.5 py-3 text-sm">
+          <div className="font-semibold text-ink">{booking.clientName}</div>
+          <div className="text-ink-2 tabular">
+            {formatDate(booking.date, i18n.language)} · {hhmm(booking.startTime)} · {formatMoney(booking.totalAmount)}
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('bookings.paymentStatus')}</label>
-            <div className="space-y-2">
-              {(['Unpaid', 'Prepaid', 'FullyPaid'] as PaymentStatus[]).map((s) => (
-                <label key={s} className="flex items-center gap-2 cursor-pointer">
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium text-ink-2">{t('bookings.paymentStatus')}</legend>
+          <div className="grid grid-cols-3 gap-2">
+            {(['Unpaid', 'Prepaid', 'FullyPaid'] as PaymentStatus[]).map((s) => {
+              const on = status === s
+              return (
+                <label
+                  key={s}
+                  className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border px-2 py-3 text-center text-sm font-semibold transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-brand ${
+                    on ? 'border-brand bg-brand-soft text-ink' : 'border-line-strong text-ink-2 hover:bg-sunken'
+                  }`}
+                >
                   <input
                     type="radio"
                     name="paymentStatus"
                     value={s}
-                    checked={status === s}
+                    checked={on}
                     onChange={() => setStatus(s)}
-                    className="accent-green-600"
+                    className="sr-only"
                   />
-                  <span className="text-sm">{t(`bookings.paymentStatuses.${s.toLowerCase()}`)}</span>
+                  <span className={`size-2.5 rounded-full ${paymentDotClass(s)}`} aria-hidden />
+                  {t(`bookings.paymentStatuses.${s.toLowerCase()}`)}
                 </label>
-              ))}
-            </div>
+              )
+            })}
           </div>
+        </fieldset>
 
-          {status === 'Prepaid' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('bookings.prepayment')}</label>
-              <input
-                type="number"
-                min={0}
-                value={prepayment}
-                onChange={(e) => setPrepayment(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-1">
-            <button
-              onClick={() => onSave(status, prepayment ? parseFloat(prepayment) : undefined)}
-              disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-medium py-2 rounded-lg transition-colors text-sm"
-            >
-              {loading ? t('common.loading') : t('common.save')}
-            </button>
-            <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              {t('common.cancel')}
-            </button>
-          </div>
-        </div>
+        {status === 'Prepaid' && (
+          <Field label={t('bookings.prepayment')} htmlFor="prepayment">
+            <input
+              id="prepayment"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={prepayment}
+              onChange={(e) => setPrepayment(e.target.value)}
+              className={`${inputClass} tabular`}
+            />
+          </Field>
+        )}
       </div>
-    </div>
+    </Sheet>
   )
 }
 
 export default function AdminBookingsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const [filterVenue, setFilterVenue] = useState('')
   const [filterDate, setFilterDate] = useState('')
   const [paymentModal, setPaymentModal] = useState<Booking | null>(null)
+  const [now] = useState(() => Date.now())
 
   const { data: bookings = [], isLoading } = useQuery({ queryKey: ['allBookings'], queryFn: getAllBookings })
   const { data: venues = [] } = useQuery({ queryKey: ['venues'], queryFn: getVenues })
 
   const cancelMutation = useMutation({
     mutationFn: cancelBooking,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['allBookings'] }); toast.success(t('bookings.cancelBooking')) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['allBookings'] }); toast.success(t('bookings.cancelled')) },
     onError: () => toast.error(t('common.error')),
   })
 
@@ -121,7 +134,7 @@ export default function AdminBookingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allBookings'] })
       setPaymentModal(null)
-      toast.success(t('common.save'))
+      toast.success(t('bookings.paymentSaved'))
     },
     onError: () => toast.error(t('common.error')),
   })
@@ -140,20 +153,30 @@ export default function AdminBookingsPage() {
     )
 
   // A booking is past once its end time (date + endTime) is before now.
-  const isPast = (b: Booking) => new Date(`${b.date}T${b.endTime}`).getTime() < Date.now()
+  const isPast = (b: Booking) => new Date(`${b.date}T${b.endTime}`).getTime() < now
 
-  if (isLoading) return <div className="text-center py-20 text-gray-500">{t('common.loading')}</div>
+  const groups: { date: string; items: Booking[] }[] = []
+  filtered.forEach((b) => {
+    const last = groups[groups.length - 1]
+    if (last && last.date === b.date) last.items.push(b)
+    else groups.push({ date: b.date, items: [b] })
+  })
+
+  const hasFilter = !!(filterVenue || filterDate)
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('nav.adminBookings')}</h1>
+      <PageHeader
+        title={t('nav.adminBookings')}
+        description={!isLoading ? t('bookings.count', { count: filtered.length }) : undefined}
+      />
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-5">
+      <div className="mb-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <select
           value={filterVenue}
           onChange={(e) => setFilterVenue(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          aria-label={t('bookings.venue')}
+          className={`${inputClass} sm:w-56`}
         >
           <option value="">{t('schedule.allVenues')}</option>
           {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -162,91 +185,112 @@ export default function AdminBookingsPage() {
           type="date"
           value={filterDate}
           onChange={(e) => setFilterDate(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          aria-label={t('bookings.date')}
+          className={`${inputClass} sm:w-48`}
         />
-        {(filterVenue || filterDate) && (
-          <button
+        {hasFilter && (
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<X className="size-4" />}
             onClick={() => { setFilterVenue(''); setFilterDate('') }}
-            className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+            className="col-span-2 justify-self-start"
           >
-            <X className="w-3.5 h-3.5" /> {t('common.reset')}
-          </button>
+            {t('common.reset')}
+          </Button>
         )}
       </div>
 
-      {!filtered.length ? (
-        <div className="text-center py-20 text-gray-500">{t('bookings.noBookings')}</div>
+      {isLoading ? (
+        <ListSkeleton rows={4} className="h-36 rounded-2xl" />
+      ) : !filtered.length ? (
+        <Card>
+          <EmptyState
+            icon={<ClipboardList className="size-6" />}
+            title={t('bookings.noBookings')}
+            text={hasFilter ? t('bookings.noBookingsFiltered') : undefined}
+            action={
+              hasFilter ? (
+                <Button variant="secondary" onClick={() => { setFilterVenue(''); setFilterDate('') }}>
+                  {t('common.reset')}
+                </Button>
+              ) : undefined
+            }
+          />
+        </Card>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((booking) => {
-            const past = booking.status === 'Active' && isPast(booking)
-            return (
-            <div
-              key={booking.id}
-              className={`bg-white rounded-xl shadow-sm border p-4 ${
-                booking.status === 'Cancelled' ? 'border-gray-100 opacity-60' : 'border-gray-100'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="font-semibold text-gray-900">{booking.clientName}</span>
-                    <PaymentBadge status={booking.paymentStatus} />
-                    {booking.status === 'Cancelled' && (
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                        {t('bookings.statuses.cancelled')}
-                      </span>
-                    )}
-                    {past && (
-                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                        {t('bookings.past')}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                    <span className="text-green-700 font-medium">{booking.venueName}</span>
-                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-violet-500" />{formatDate(booking.date)}</span>
-                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-orange-500" />{booking.startTime.substring(0, 5)}–{booking.endTime.substring(0, 5)}</span>
-                    <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-green-500" /><a href={phoneLink(booking.clientPhone)} className="text-green-700 hover:underline">{booking.clientPhone}</a></span>
-                    {booking.createdByName && (
-                      <span className="flex items-center gap-1" title={t('bookings.createdBy')}>
-                        <UserCircle className="w-3.5 h-3.5 text-blue-500" />{booking.createdByName}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-4 mt-2 text-xs">
-                    <span className="text-gray-500">Итого: <span className="font-medium text-gray-800">{booking.totalAmount.toLocaleString()} сум</span></span>
-                    <span className="text-green-700">Оплачено: <span className="font-medium">{(booking.paymentStatus === 'FullyPaid' ? booking.totalAmount : booking.prepaymentAmount ?? 0).toLocaleString()} сум</span></span>
-                    <span className="text-red-600">Остаток: <span className="font-medium">{(booking.paymentStatus === 'FullyPaid' ? 0 : booking.totalAmount - (booking.prepaymentAmount ?? 0)).toLocaleString()} сум</span></span>
-                  </div>
-                  {booking.notes && <p className="mt-1.5 text-xs text-gray-400 italic">"{booking.notes}"</p>}
-                </div>
+        <div className="space-y-6">
+          {groups.map((g) => (
+            <section key={g.date}>
+              <h2 className="mb-2 px-1 text-sm font-semibold text-ink-3">{formatDate(g.date, i18n.language)}</h2>
+              <div className="space-y-2.5">
+                {g.items.map((booking) => {
+                  const past = booking.status === 'Active' && isPast(booking)
+                  const cancelled = booking.status === 'Cancelled'
+                  return (
+                    <Card key={booking.id} className={`p-4 ${cancelled ? 'opacity-60' : ''}`}>
+                      <div className="flex items-start gap-3">
+                        <div className="w-[52px] shrink-0 tabular">
+                          <div className="text-[15px] font-bold leading-tight text-ink">{hhmm(booking.startTime)}</div>
+                          <div className="text-xs text-ink-3">{hhmm(booking.endTime)}</div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                            <span className="font-semibold text-ink">{booking.clientName}</span>
+                            {cancelled ? (
+                              <Tag tone="danger">{t('bookings.statuses.cancelled')}</Tag>
+                            ) : (
+                              <PaymentBadge status={booking.paymentStatus} />
+                            )}
+                            {past && <Tag>{t('bookings.past')}</Tag>}
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-3">
+                            <span className="font-medium text-ink-2">{booking.venueName}</span>
+                            <a
+                              href={phoneLink(booking.clientPhone)}
+                              className="inline-flex items-center gap-1 text-brand tabular hover:underline"
+                            >
+                              <Phone className="size-3.5" />
+                              {booking.clientPhone}
+                            </a>
+                            {booking.createdByName && (
+                              <span className="inline-flex items-center gap-1" title={t('bookings.createdBy')}>
+                                <UserRound className="size-3.5" />
+                                {booking.createdByName}
+                              </span>
+                            )}
+                          </div>
+                          {booking.notes && <p className="mt-1.5 text-sm text-ink-2">{booking.notes}</p>}
+                          <MoneyLine booking={booking} className="mt-3 max-w-sm" />
+                        </div>
+                      </div>
 
-                {booking.status === 'Active' && (
-                  <div className="flex gap-2 flex-shrink-0">
-                    {/* Payment stays editable even for past bookings (paid later). */}
-                    <button
-                      onClick={() => setPaymentModal(booking)}
-                      className="text-xs text-green-700 hover:text-green-900 border border-green-200 hover:border-green-400 px-3 py-1 rounded-lg transition-colors"
-                    >
-                      {t('bookings.updatePayment')}
-                    </button>
-                    {/* Cancelling a slot that already passed makes no sense. */}
-                    {!past && (
-                    <button
-                      onClick={() => { if (confirm(t('bookings.cancelConfirm'))) cancelMutation.mutate(booking.id) }}
-                      disabled={cancelMutation.isPending}
-                      className="text-xs text-red-600 hover:text-red-800 border border-red-200 hover:border-red-400 px-3 py-1 rounded-lg transition-colors"
-                    >
-                      {t('bookings.cancelBooking')}
-                    </button>
-                    )}
-                  </div>
-                )}
+                      {booking.status === 'Active' && (
+                        <div className="mt-3 flex gap-2 border-t border-line pt-3 sm:justify-end">
+                          {/* Payment stays editable even for past bookings (paid later). */}
+                          <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" onClick={() => setPaymentModal(booking)}>
+                            {t('bookings.updatePayment')}
+                          </Button>
+                          {/* Cancelling a slot that already passed makes no sense. */}
+                          {!past && (
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              className="flex-1 sm:flex-none"
+                              disabled={cancelMutation.isPending}
+                              onClick={() => { if (confirm(t('bookings.cancelConfirm'))) cancelMutation.mutate(booking.id) }}
+                            >
+                              {t('bookings.cancelBooking')}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </Card>
+                  )
+                })}
               </div>
-            </div>
-            )
-          })}
+            </section>
+          ))}
         </div>
       )}
 

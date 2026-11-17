@@ -3,34 +3,58 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
-import { ArrowLeft, MapPin, Phone, Clock, Calendar } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Clock, MapPin, Phone, Plus, SearchX } from 'lucide-react'
 import { getVenue } from '../api/venues'
-import { phoneLink, todayIso } from '../utils/format'
+import { formatMoney, hhmm, hourLabel, phoneLink } from '../utils/format'
 import { getBookingsByVenueAndDate } from '../api/bookings'
 import { useAuthStore } from '../store/authStore'
-import type { Booking } from '../types'
+import DateStrip from '../components/DateStrip'
+import { Card, EmptyState, MoneyLine, PaymentBadge, Skeleton } from '../components/ui'
+import { buttonClass, paymentDotClass } from '../components/styles'
+import type { Booking, PaymentStatus } from '../types'
 
-function formatTime(t: string) {
-  return t.substring(0, 5)
+const slotTone: Record<PaymentStatus, string> = {
+  FullyPaid: 'bg-paid-soft',
+  Prepaid: 'bg-pre-soft',
+  Unpaid: 'bg-due-soft',
 }
 
-function paymentBadgeClass(status: string) {
-  if (status === 'FullyPaid') return 'bg-green-500'
-  if (status === 'Prepaid') return 'bg-yellow-400'
-  return 'bg-gray-400'
-}
-
-function SlotTooltip({ booking }: { booking: Booking }) {
+function BookedSlot({ booking }: { booking: Booking }) {
   const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
   return (
-    <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl pointer-events-none">
-      <div className="font-semibold mb-1">{booking.clientName}</div>
-      <a href={phoneLink(booking.clientPhone)} className="text-green-400 hover:underline">{booking.clientPhone}</a>
-      <div className="mt-1 text-gray-300">
-        {t(`bookings.paymentStatuses.${booking.paymentStatus.toLowerCase()}`)}
-      </div>
-      {booking.notes && <div className="mt-1 text-gray-400 italic">{booking.notes}</div>}
-      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+    <div className={`rounded-xl ${slotTone[booking.paymentStatus]}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex min-h-12 w-full items-center gap-3 px-3.5 py-2 text-left"
+      >
+        <span className={`size-2 shrink-0 rounded-full ${paymentDotClass(booking.paymentStatus)}`} aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[15px] font-semibold text-ink">{booking.clientName}</span>
+          <span className="block truncate text-xs text-ink-2 tabular">{booking.clientPhone}</span>
+        </span>
+        <span className="hidden sm:block">
+          <PaymentBadge status={booking.paymentStatus} className="bg-surface/70" />
+        </span>
+        <ChevronDown
+          className={`size-4 shrink-0 text-ink-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open && (
+        <div className="space-y-3 border-t border-ink/5 px-3.5 pt-3 pb-3.5">
+          <span className="block sm:hidden">
+            <PaymentBadge status={booking.paymentStatus} className="bg-surface/70" />
+          </span>
+          <MoneyLine booking={booking} />
+          {booking.notes && <p className="text-sm text-ink-2">{booking.notes}</p>}
+          <a href={phoneLink(booking.clientPhone)} className={buttonClass('secondary', 'sm', 'w-full sm:w-auto')}>
+            <Phone className="size-4" />
+            {t('bookings.callClient')}
+          </a>
+        </div>
+      )}
     </div>
   )
 }
@@ -41,21 +65,34 @@ export default function VenueDetailPage() {
   const navigate = useNavigate()
   const loggedIn = useAuthStore((s) => s.isAuthenticated())
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [hoveredBooking, setHoveredBooking] = useState<string | null>(null)
+  const [now] = useState(() => Date.now())
 
   const { data: venue, isLoading: venueLoading } = useQuery({
     queryKey: ['venue', id],
     queryFn: () => getVenue(id!),
   })
 
-  const { data: bookings = [] } = useQuery({
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ['bookings', id, selectedDate],
     queryFn: () => getBookingsByVenueAndDate(id!, selectedDate),
     enabled: !!id,
   })
 
-  if (venueLoading) return <div className="text-center py-20 text-gray-500">{t('common.loading')}</div>
-  if (!venue) return null
+  if (venueLoading)
+    return (
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,360px)_1fr]" role="status" aria-label={t('common.loading')}>
+        <Skeleton className="h-80 rounded-2xl" />
+        <Skeleton className="h-[480px] rounded-2xl" />
+      </div>
+    )
+  if (!venue)
+    return (
+      <EmptyState
+        icon={<SearchX className="size-6" />}
+        title={t('venues.notFound')}
+        action={<Link to="/venues" className={buttonClass('secondary')}>{t('common.back')}</Link>}
+      />
+    )
 
   const openHour = parseInt(venue.openTime.substring(0, 2))
   const closeHour = parseInt(venue.closeTime.substring(0, 2))
@@ -64,7 +101,7 @@ export default function VenueDetailPage() {
   // A slot is in the past if its start (selectedDate + hour) is before now.
   const isPastHour = (hour: number) => {
     const slot = new Date(`${selectedDate}T${String(hour).padStart(2, '0')}:00:00`)
-    return slot.getTime() < Date.now()
+    return slot.getTime() < now
   }
 
   const bookingByHour = new Map<number, Booking>()
@@ -75,141 +112,157 @@ export default function VenueDetailPage() {
     }
   })
 
+  const freeCount = hours.filter((h) => !bookingByHour.has(h) && !isPastHour(h)).length
+
   return (
-    <div className="max-w-4xl">
-      <Link to="/venues" className="inline-flex items-center gap-1 text-sm text-green-700 hover:text-green-900 mb-4">
-        <ArrowLeft className="w-4 h-4 text-green-700" />
-        {t('common.back')}
+    <div className={loggedIn ? '' : 'pb-20 lg:pb-0'}>
+      <Link
+        to="/venues"
+        className="-ml-2 mb-3 inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+      >
+        <ArrowLeft className="size-4" />
+        {t('nav.venues')}
       </Link>
 
-      {/* Venue header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-        <div className="h-56 bg-gray-200 overflow-hidden">
-          <img
-            src={venue.imageUrl || '/venue-placeholder.svg'}
-            onError={(e) => { e.currentTarget.src = '/venue-placeholder.svg' }}
-            alt={venue.name}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="p-5">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">{venue.name}</h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
-              <span>{venue.address}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-green-500 flex-shrink-0" />
-              <a href={phoneLink(venue.phone)} className="text-green-700 hover:underline">{venue.phone}</a>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-orange-500 flex-shrink-0" />
-              <span>{formatTime(venue.openTime)} — {formatTime(venue.closeTime)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-green-700">{venue.pricePerHour.toLocaleString()} сум / {t('venues.pricePerHour')}</span>
-            </div>
-          </div>
-          {venue.description && <p className="text-gray-600 text-sm">{venue.description}</p>}
-        </div>
-      </div>
-
-      {/* Schedule */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-violet-500" />
-            {loggedIn ? t('schedule.title') : t('schedule.availabilityToday')}
-          </h2>
-          {/* Only logged-in users pick a date; guests see today's availability. */}
-          {loggedIn && (
-            <input
-              type="date"
-              value={selectedDate}
-              min={todayIso()}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:gap-7">
+        <Card className="overflow-hidden lg:sticky lg:top-9">
+          <div className="aspect-[16/9] bg-sunken">
+            <img
+              src={venue.imageUrl || '/venue-placeholder.svg'}
+              onError={(e) => { e.currentTarget.src = '/venue-placeholder.svg' }}
+              alt={venue.name}
+              className="size-full object-cover"
             />
-          )}
-        </div>
-
-        {/* Legend — guests only need busy vs free; staff see payment statuses. */}
-        <div className="flex gap-4 mb-4 text-xs text-gray-500">
-          {loggedIn ? (
-            <>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500 inline-block" />{t('bookings.paymentStatuses.fullypaid')}</div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-yellow-400 inline-block" />{t('bookings.paymentStatuses.prepaid')}</div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400 inline-block" />{t('bookings.paymentStatuses.unpaid')}</div>
-            </>
-          ) : (
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400 inline-block" />{t('bookings.booked')}</div>
-          )}
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-100 border border-gray-200 inline-block" />{t('bookings.free')}</div>
-        </div>
-
-        {/* Timeline */}
-        <div className="grid gap-2">
-          {hours.map((hour) => {
-            const booking = bookingByHour.get(hour)
-            const timeLabel = `${String(hour).padStart(2, '0')}:00`
-            const nextLabel = `${String(hour + 1).padStart(2, '0')}:00`
-
-            return (
-              <div key={hour} className="flex items-center gap-3">
-                <span className="text-xs text-gray-400 w-12 flex-shrink-0 text-right">
-                  {timeLabel}–{nextLabel}
-                </span>
-                <div className="flex-1 relative">
-                  {booking ? (
-                    loggedIn ? (
-                      <div
-                        className={`relative h-10 rounded-lg ${paymentBadgeClass(booking.paymentStatus)} flex items-center px-3 cursor-default`}
-                        onMouseEnter={() => setHoveredBooking(booking.id)}
-                        onMouseLeave={() => setHoveredBooking(null)}
-                      >
-                        <span className="text-white text-xs font-medium truncate">
-                          {booking.clientName} · <a href={phoneLink(booking.clientPhone)} className="hover:underline">{booking.clientPhone}</a>
-                        </span>
-                        {hoveredBooking === booking.id && <SlotTooltip booking={booking} />}
-                      </div>
-                    ) : (
-                      // Guests just see the slot is taken — no client details.
-                      <div className="h-10 rounded-lg bg-gray-400 flex items-center px-3 cursor-default">
-                        <span className="text-white text-xs font-medium">{t('bookings.booked')}</span>
-                      </div>
-                    )
-                  ) : isPastHour(hour) ? (
-                    // Past slots can't be booked.
-                    <div className="w-full h-10 rounded-lg bg-gray-50 border border-dashed border-gray-100 flex items-center px-3 text-xs text-gray-300">
-                      {t('bookings.past')}
-                    </div>
-                  ) : loggedIn ? (
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/bookings/new?venueId=${id}&date=${selectedDate}&hour=${hour}`
-                        )
-                      }
-                      className="w-full h-10 rounded-lg bg-gray-50 border border-dashed border-gray-200 hover:bg-green-50 hover:border-green-300 transition-colors text-xs text-gray-400 hover:text-green-600"
-                    >
-                      {t('bookings.free')} — {t('bookings.bookSlot')}
-                    </button>
-                  ) : (
-                    // Guests can't book online — direct them to call the venue.
-                    <div className="w-full h-10 rounded-lg bg-gray-50 border border-dashed border-gray-200 flex items-center px-3 text-xs text-gray-400">
-                      {t('bookings.free')} — {t('bookings.callToBook')}{' '}
-                      <a href={phoneLink(venue.phone)} className="ml-1 text-green-600 hover:underline font-medium">
-                        {venue.phone}
-                      </a>
-                    </div>
-                  )}
+          </div>
+          <div className="p-4 lg:p-5">
+            <h1 className="text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink">{venue.name}</h1>
+            <div className="mt-1.5 flex items-start gap-1.5 text-sm text-ink-2">
+              <MapPin className="mt-0.5 size-4 shrink-0 text-ink-3" />
+              {venue.address}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-sunken px-3 py-2.5">
+                <div className="text-xs text-ink-3">{t('venues.price')}</div>
+                <div className="mt-0.5 font-bold text-ink tabular">
+                  {formatMoney(venue.pricePerHour)}{' '}
+                  <span className="text-sm font-medium text-ink-3">{t('venues.pricePerHour')}</span>
                 </div>
               </div>
-            )
-          })}
-        </div>
+              <div className="rounded-xl bg-sunken px-3 py-2.5">
+                <div className="text-xs text-ink-3">{t('venues.workingHours')}</div>
+                <div className="mt-0.5 flex items-center gap-1.5 font-bold text-ink tabular">
+                  <Clock className="size-3.5 text-ink-3" />
+                  {hhmm(venue.openTime)}–{hhmm(venue.closeTime)}
+                </div>
+              </div>
+            </div>
+            {venue.description && <p className="mt-4 text-sm leading-relaxed text-ink-2">{venue.description}</p>}
+            <a
+              href={phoneLink(venue.phone)}
+              className={buttonClass(loggedIn ? 'secondary' : 'primary', 'md', 'mt-4 w-full')}
+            >
+              <Phone className="size-4" />
+              <span className="tabular">{venue.phone}</span>
+            </a>
+          </div>
+        </Card>
+
+        <Card className="p-4 lg:p-5">
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-bold tracking-[-0.01em] text-ink">
+              {loggedIn ? t('schedule.title') : t('schedule.availabilityToday')}
+            </h2>
+            <span className="text-sm text-ink-3">
+              {t('schedule.freeOf', { free: freeCount, total: hours.length })}
+            </span>
+          </div>
+
+          {/* Only logged-in users pick a date; guests see today's availability. */}
+          {loggedIn && (
+            <div className="mb-4">
+              <DateStrip value={selectedDate} onChange={setSelectedDate} />
+            </div>
+          )}
+
+          {/* Legend — guests only need busy vs free; staff see payment statuses. */}
+          {loggedIn && (
+            <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-ink-3">
+              {(['FullyPaid', 'Prepaid', 'Unpaid'] as PaymentStatus[]).map((s) => (
+                <span key={s} className="inline-flex items-center gap-1.5">
+                  <span className={`size-2 rounded-full ${paymentDotClass(s)}`} />
+                  {t(`bookings.paymentStatuses.${s.toLowerCase()}`)}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {bookingsLoading ? (
+            <div className="space-y-1.5" role="status" aria-label={t('common.loading')}>
+              {hours.slice(0, 8).map((h) => (
+                <Skeleton key={h} className="h-12" />
+              ))}
+            </div>
+          ) : (
+            <ol className="divide-y divide-line">
+              {hours.map((hour) => {
+                const booking = bookingByHour.get(hour)
+                const past = isPastHour(hour)
+                return (
+                  <li key={hour} className="flex items-start gap-3 py-1.5">
+                    <div className={`w-14 shrink-0 pt-3 tabular ${past && !booking ? 'opacity-50' : ''}`}>
+                      <div className="text-[15px] font-bold leading-none text-ink">{hourLabel(hour)}</div>
+                      <div className="mt-1 text-[11px] leading-none text-ink-3">{hourLabel(hour + 1)}</div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      {booking ? (
+                        loggedIn ? (
+                          <BookedSlot booking={booking} />
+                        ) : (
+                          // Guests just see the slot is taken — no client details.
+                          <div className="flex min-h-12 items-center rounded-xl bg-sunken px-3.5 text-sm font-semibold text-ink-3">
+                            {t('bookings.booked')}
+                          </div>
+                        )
+                      ) : past ? (
+                        // Past slots can't be booked.
+                        <div className="flex min-h-12 items-center px-3.5 text-sm text-ink-3/70">
+                          {t('bookings.past')}
+                        </div>
+                      ) : loggedIn ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/bookings/new?venueId=${id}&date=${selectedDate}&hour=${hour}`)}
+                          className="group flex min-h-12 w-full items-center justify-between rounded-xl border border-dashed border-line-strong px-3.5 text-left transition-colors duration-150 hover:border-brand hover:bg-brand-soft"
+                        >
+                          <span className="text-sm font-medium text-ink-2">{t('bookings.free')}</span>
+                          <span className="inline-flex items-center gap-1 text-sm font-semibold text-brand">
+                            <Plus className="size-4" />
+                            {t('bookings.book')}
+                          </span>
+                        </button>
+                      ) : (
+                        // Guests can't book online — direct them to call the venue.
+                        <div className="flex min-h-12 items-center rounded-xl border border-dashed border-brand/40 bg-brand-soft/60 px-3.5 text-sm font-semibold text-brand-ink">
+                          {t('bookings.free')}
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+        </Card>
       </div>
+
+      {!loggedIn && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden">
+          <a href={phoneLink(venue.phone)} className={buttonClass('primary', 'lg', 'w-full')}>
+            <Phone className="size-4" />
+            {t('bookings.callToBookShort')}
+          </a>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,165 +1,233 @@
-import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LogOut, LogIn, Globe, Menu, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  BarChart3,
+  CalendarDays,
+  ClipboardList,
+  LogIn,
+  LogOut,
+  MapPin,
+  Ticket,
+  Users,
+  Warehouse,
+} from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import Logo from './Logo'
 
-export default function Navbar() {
-  const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { user, logout, isAdmin, isAuthenticated } = useAuthStore()
-  const loggedIn = isAuthenticated()
-  const [mobileOpen, setMobileOpen] = useState(false)
+interface NavItem {
+  to: string
+  label: string
+  short: string
+  icon: LucideIcon
+}
 
-  const toggleLang = () => {
+function useNavItems(): NavItem[] {
+  const { t } = useTranslation()
+  const { isAdmin, isAuthenticated } = useAuthStore()
+
+  if (!isAuthenticated()) {
+    return [{ to: '/venues', label: t('nav.venues'), short: t('nav.venues'), icon: MapPin }]
+  }
+  if (isAdmin()) {
+    return [
+      { to: '/admin/schedule', label: t('nav.adminSchedule'), short: t('nav.short.schedule'), icon: CalendarDays },
+      { to: '/admin/bookings', label: t('nav.adminBookings'), short: t('nav.short.bookings'), icon: ClipboardList },
+      { to: '/admin/dashboard', label: t('nav.adminDashboard'), short: t('nav.short.dashboard'), icon: BarChart3 },
+      { to: '/admin/venues', label: t('nav.short.venues'), short: t('nav.short.venues'), icon: Warehouse },
+      { to: '/admin/users', label: t('nav.adminUsers'), short: t('nav.short.users'), icon: Users },
+    ]
+  }
+  return [
+    { to: '/venues', label: t('nav.venues'), short: t('nav.venues'), icon: MapPin },
+    { to: '/my-bookings', label: t('nav.myBookings'), short: t('nav.short.myBookings'), icon: Ticket },
+  ]
+}
+
+function useLang() {
+  const { i18n } = useTranslation()
+  const toggle = () => {
     const next = i18n.language === 'ru' ? 'uz' : 'ru'
     i18n.changeLanguage(next)
     localStorage.setItem('lang', next)
+    document.documentElement.lang = next
   }
+  return { lang: i18n.language, toggle }
+}
 
-  const handleLogout = () => {
+function LangButton({ className = '' }: { className?: string }) {
+  const { t } = useTranslation()
+  const { lang, toggle } = useLang()
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={t('nav.switchLang')}
+      aria-label={t('nav.switchLang')}
+      className={`inline-flex h-9 items-center gap-1 rounded-lg border border-line px-1 text-xs font-semibold transition-colors duration-150 hover:border-line-strong ${className}`}
+    >
+      <span className={`rounded-md px-1.5 py-1 ${lang === 'ru' ? 'bg-ink text-white' : 'text-ink-3'}`}>RU</span>
+      <span className={`rounded-md px-1.5 py-1 ${lang === 'uz' ? 'bg-ink text-white' : 'text-ink-3'}`}>UZ</span>
+    </button>
+  )
+}
+
+function useLogout() {
+  const navigate = useNavigate()
+  const logout = useAuthStore((s) => s.logout)
+  return () => {
     logout()
     // Send the now-guest user to the public root (redirects to /venues).
     navigate('/')
   }
+}
 
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + '/')
-
-  const adminLinks = [
-    { to: '/admin/dashboard', label: t('nav.adminDashboard') },
-    { to: '/admin/schedule', label: t('nav.adminSchedule') },
-    { to: '/admin/venues', label: t('nav.adminVenues') },
-    { to: '/admin/bookings', label: t('nav.adminBookings') },
-    { to: '/admin/users', label: t('nav.adminUsers') },
-  ]
-
-  const userLinks = [
-    { to: '/venues', label: t('nav.venues') },
-    { to: '/my-bookings', label: t('nav.myBookings') },
-  ]
-
-  // Guests (not logged in) only get the public venues/schedule listing.
-  const guestLinks = [{ to: '/venues', label: t('nav.venues') }]
-
-  const links = !loggedIn ? guestLinks : isAdmin() ? adminLinks : userLinks
+export function Sidebar() {
+  const { t } = useTranslation()
+  const items = useNavItems()
+  const { user, isAuthenticated } = useAuthStore()
+  const loggedIn = isAuthenticated()
+  const handleLogout = useLogout()
 
   return (
-    <nav className="bg-green-800 text-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-14">
-          {/* Logo + desktop links */}
-          <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2 font-bold text-lg flex-shrink-0">
-              <span>⚽</span>
-              <span>BronSlot</span>
-            </Link>
-            <div className="hidden md:flex items-center gap-1">
-              {links.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    isActive(link.to)
-                      ? 'bg-white/20 text-white'
-                      : 'text-green-100 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+    <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line bg-surface lg:flex">
+      <div className="flex h-16 items-center px-5">
+        <Link to="/" aria-label="BronSlot">
+          <Logo />
+        </Link>
+      </div>
+      <nav className="flex-1 space-y-0.5 px-3 pt-2" aria-label={t('nav.main')}>
+        {items.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors duration-150 ${
+                isActive ? 'bg-brand-soft text-brand-ink' : 'text-ink-2 hover:bg-sunken hover:text-ink'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon className={`size-4.5 ${isActive ? 'text-brand' : 'text-ink-3'}`} strokeWidth={2} />
+                {label}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="space-y-3 border-t border-line p-4">
+        <LangButton />
+        {loggedIn ? (
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sunken text-sm font-semibold text-ink-2">
+              {user?.fullName?.trim().charAt(0).toUpperCase() ?? '?'}
             </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-semibold text-ink">{user?.fullName}</div>
+              <div className="truncate text-xs text-ink-3">
+                {user ? t(`users.roles.${user.role.toLowerCase()}`) : ''}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title={t('auth.logout')}
+              aria-label={t('auth.logout')}
+              className="inline-flex size-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
+            >
+              <LogOut className="size-4.5" />
+            </button>
           </div>
+        ) : (
+          <Link
+            to="/login"
+            className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+          >
+            <LogIn className="size-4" />
+            {t('auth.login')}
+          </Link>
+        )}
+      </div>
+    </aside>
+  )
+}
 
-          {/* Right side */}
-          <div className="flex items-center gap-2">
-            {loggedIn && (
-              <span className="text-sm text-green-200 hidden sm:block truncate max-w-[120px]">
-                {user?.fullName}
-              </span>
-            )}
+export function TopBar() {
+  const { t } = useTranslation()
+  const loggedIn = useAuthStore((s) => s.isAuthenticated())
+  const handleLogout = useLogout()
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur-sm lg:hidden">
+      <div className="flex h-14 items-center justify-between gap-3 px-4">
+        <Link to="/" aria-label="BronSlot">
+          <Logo />
+        </Link>
+        <div className="flex items-center gap-1.5">
+          <LangButton />
+          {loggedIn ? (
             <button
-              onClick={toggleLang}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-green-100 hover:bg-white/10 transition-colors"
-              title="Сменить язык"
+              type="button"
+              onClick={handleLogout}
+              title={t('auth.logout')}
+              aria-label={t('auth.logout')}
+              className="inline-flex size-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-sunken hover:text-ink"
             >
-              <Globe className="w-4 h-4" />
-              <span className="uppercase font-medium">{i18n.language}</span>
+              <LogOut className="size-4.5" />
             </button>
-            {loggedIn ? (
-              <button
-                onClick={handleLogout}
-                className="hidden md:flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-green-100 hover:bg-white/10 transition-colors"
-                title={t('auth.logout')}
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            ) : (
-              <Link
-                to="/login"
-                className="hidden md:flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-white/15 text-white hover:bg-white/25 transition-colors"
-              >
-                <LogIn className="w-4 h-4" />
-                {t('auth.login')}
-              </Link>
-            )}
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileOpen((v) => !v)}
-              className="md:hidden p-1.5 rounded-md text-green-100 hover:bg-white/10 transition-colors"
-              aria-label="Меню"
+          ) : (
+            <Link
+              to="/login"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
+              <LogIn className="size-4" />
+              {t('auth.login')}
+            </Link>
+          )}
         </div>
       </div>
+    </header>
+  )
+}
 
-      {/* Mobile dropdown */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-green-700 bg-green-900">
-          <div className="px-4 py-3 space-y-1">
-            {links.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileOpen(false)}
-                className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive(link.to)
-                    ? 'bg-white/20 text-white'
-                    : 'text-green-100 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="border-t border-green-700 pt-2 mt-2">
-              {loggedIn ? (
-                <>
-                  <div className="text-xs text-green-400 px-3 mb-1">{user?.fullName}</div>
-                  <button
-                    onClick={() => { setMobileOpen(false); handleLogout() }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-green-100 hover:bg-white/10 w-full text-left transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {t('auth.logout')}
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-green-100 hover:bg-white/10 w-full text-left transition-colors"
+export function TabBar() {
+  const { t } = useTranslation()
+  const items = useNavItems()
+  const loggedIn = useAuthStore((s) => s.isAuthenticated())
+  if (!loggedIn) return null
+
+  return (
+    <nav
+      aria-label={t('nav.main')}
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
+    >
+      <div className="mx-auto flex max-w-xl">
+        {items.map(({ to, short, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors duration-150 ${
+                isActive ? 'text-brand' : 'text-ink-3 hover:text-ink'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-150 ${
+                    isActive ? 'bg-brand-soft' : ''
+                  }`}
                 >
-                  <LogIn className="w-4 h-4" />
-                  {t('auth.login')}
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                  <Icon className="size-5" strokeWidth={isActive ? 2.25 : 2} />
+                </span>
+                <span className="max-w-full truncate px-1">{short}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   )
 }

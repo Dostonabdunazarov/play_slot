@@ -1,41 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
-import { Calendar, Clock, MapPin } from 'lucide-react'
-import { formatDate, phoneLink } from '../utils/format'
+import { Phone, Ticket } from 'lucide-react'
+import { formatDate, hhmm, phoneLink } from '../utils/format'
 import { getMyBookings, cancelBooking } from '../api/bookings'
-import type { PaymentStatus, BookingStatus } from '../types'
-
-function PaymentBadge({ status }: { status: PaymentStatus }) {
-  const { t } = useTranslation()
-  const map: Record<PaymentStatus, string> = {
-    FullyPaid: 'bg-green-100 text-green-800',
-    Prepaid: 'bg-yellow-100 text-yellow-800',
-    Unpaid: 'bg-gray-100 text-gray-700',
-  }
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${map[status]}`}>
-      {t(`bookings.paymentStatuses.${status.toLowerCase()}`)}
-    </span>
-  )
-}
-
-function StatusBadge({ status }: { status: BookingStatus }) {
-  const { t } = useTranslation()
-  return (
-    <span
-      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-        status === 'Active' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-700'
-      }`}
-    >
-      {t(`bookings.statuses.${status.toLowerCase()}`)}
-    </span>
-  )
-}
+import { Button, Card, EmptyState, ListSkeleton, MoneyLine, PageHeader, PaymentBadge, Tag } from '../components/ui'
+import { buttonClass } from '../components/styles'
 
 export default function MyBookingsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ['myBookings'],
@@ -46,76 +21,90 @@ export default function MyBookingsPage() {
     mutationFn: cancelBooking,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myBookings'] })
-      toast.success(t('bookings.cancelBooking'))
+      toast.success(t('bookings.cancelled'))
     },
     onError: () => toast.error(t('common.error')),
   })
 
-  if (isLoading) return <div className="text-center py-20 text-gray-500">{t('common.loading')}</div>
-
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('bookings.myBookings')}</h1>
+    <div className="mx-auto max-w-3xl">
+      <PageHeader
+        title={t('bookings.myBookings')}
+        description={bookings.length ? t('bookings.count', { count: bookings.length }) : undefined}
+      />
 
-      {!bookings.length ? (
-        <div className="text-center py-20 text-gray-500">{t('bookings.noBookings')}</div>
+      {isLoading ? (
+        <ListSkeleton rows={4} className="h-40 rounded-2xl" />
+      ) : !bookings.length ? (
+        <EmptyState
+          icon={<Ticket className="size-6" />}
+          title={t('bookings.noBookings')}
+          text={t('bookings.noBookingsHint')}
+          action={<Link to="/venues" className={buttonClass('primary')}>{t('nav.venues')}</Link>}
+        />
       ) : (
-        <div className="space-y-4">
-          {bookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-5"
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div>
-                  <div className="font-semibold text-gray-900 mb-1">{booking.venueName}</div>
-                  <div className="flex gap-2 flex-wrap">
-                    <StatusBadge status={booking.status} />
+        <div className="space-y-3">
+          {bookings.map((booking) => {
+            const cancelled = booking.status === 'Cancelled'
+            return (
+              <Card key={booking.id} className={`p-4 ${cancelled ? 'opacity-60' : ''}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-ink-3">{booking.venueName}</div>
+                    <div className="mt-0.5 text-base font-bold text-ink">
+                      {formatDate(booking.date, i18n.language)}
+                      <span className="ml-2 font-semibold text-ink-2 tabular">
+                        {hhmm(booking.startTime)}–{hhmm(booking.endTime)}
+                      </span>
+                    </div>
+                  </div>
+                  {cancelled ? (
+                    <Tag tone="danger">{t('bookings.statuses.cancelled')}</Tag>
+                  ) : (
                     <PaymentBadge status={booking.paymentStatus} />
+                  )}
+                </div>
+
+                <div className="mt-3 flex items-center gap-2 text-sm text-ink-2">
+                  <span className="font-semibold text-ink">{booking.clientName}</span>
+                  <a href={phoneLink(booking.clientPhone)} className="text-brand tabular hover:underline">
+                    {booking.clientPhone}
+                  </a>
+                </div>
+
+                {booking.notes && <p className="mt-2 text-sm text-ink-2">{booking.notes}</p>}
+
+                <MoneyLine booking={booking} className="mt-3 rounded-xl bg-sunken px-3 py-2.5" />
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="text-xs text-ink-3 tabular">
+                    {t('bookings.createdAt')} {format(new Date(booking.createdAt), 'dd.MM.yyyy HH:mm')}
+                  </span>
+                  <div className="flex gap-2">
+                    <a
+                      href={phoneLink(booking.clientPhone)}
+                      aria-label={t('bookings.callClient')}
+                      className={buttonClass('secondary', 'sm', 'sm:hidden')}
+                    >
+                      <Phone className="size-4" />
+                    </a>
+                    {booking.status === 'Active' && (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={cancelMutation.isPending}
+                        onClick={() => {
+                          if (confirm(t('bookings.cancelConfirm'))) cancelMutation.mutate(booking.id)
+                        }}
+                      >
+                        {t('bookings.cancelBooking')}
+                      </Button>
+                    )}
                   </div>
                 </div>
-                {booking.status === 'Active' && (
-                  <button
-                    onClick={() => {
-                      if (confirm(t('bookings.cancelConfirm'))) cancelMutation.mutate(booking.id)
-                    }}
-                    disabled={cancelMutation.isPending}
-                    className="text-xs text-red-600 hover:text-red-800 border border-red-200 hover:border-red-400 px-3 py-1 rounded-lg transition-colors flex-shrink-0"
-                  >
-                    {t('bookings.cancelBooking')}
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm text-gray-600 mb-3">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-violet-500 flex-shrink-0" />
-                  <span>{formatDate(booking.date)}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                  <span>{booking.startTime.substring(0, 5)} — {booking.endTime.substring(0, 5)}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                  <a href={phoneLink(booking.clientPhone)} className="truncate text-green-700 hover:underline">{booking.clientPhone}</a>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-4 text-xs">
-                <span className="text-gray-500">Итого: <span className="font-medium text-gray-800">{booking.totalAmount.toLocaleString()} сум</span></span>
-                <span className="text-green-700">Оплачено: <span className="font-medium">{(booking.paymentStatus === 'FullyPaid' ? booking.totalAmount : booking.prepaymentAmount ?? 0).toLocaleString()} сум</span></span>
-                <span className="text-red-600">Остаток: <span className="font-medium">{(booking.paymentStatus === 'FullyPaid' ? 0 : booking.totalAmount - (booking.prepaymentAmount ?? 0)).toLocaleString()} сум</span></span>
-              </div>
-
-              {booking.notes && (
-                <p className="mt-3 text-xs text-gray-500 italic">"{booking.notes}"</p>
-              )}
-
-              <div className="mt-2 text-xs text-gray-400">
-                {format(new Date(booking.createdAt), 'dd.MM.yyyy HH:mm')}
-              </div>
-            </div>
-          ))}
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>
