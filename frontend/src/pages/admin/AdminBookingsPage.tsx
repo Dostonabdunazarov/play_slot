@@ -19,6 +19,7 @@ import {
 } from '../../components/ui'
 import PaymentModal from '../../components/PaymentModal'
 import type { Booking, PaymentStatus } from '../../types'
+import { DateField } from '../../components/DatePicker'
 
 export default function AdminBookingsPage() {
   const { t, i18n } = useTranslation()
@@ -90,12 +91,12 @@ export default function AdminBookingsPage() {
           <option value="">{t('schedule.allVenues')}</option>
           {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
         </select>
-        <input
-          type="date"
+        <DateField
           value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          aria-label={t('bookings.date')}
-          className={`${inputClass} sm:w-48`}
+          onChange={setFilterDate}
+          label={t('bookings.date')}
+          placeholder={t('bookings.anyDate')}
+          className="sm:w-52"
         />
         {hasFilter && (
           <Button

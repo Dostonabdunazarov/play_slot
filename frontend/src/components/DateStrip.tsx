@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { addDays, format, isToday, parseISO, differenceInCalendarDays, startOfDay } from 'date-fns'
 import { CalendarDays } from 'lucide-react'
 import { dateLocale } from '../utils/format'
+import { DatePickerButton } from './DatePicker'
 
 interface Props {
   value: string
@@ -15,7 +16,6 @@ export default function DateStrip({ value, onChange, allowPast = false, days = 1
   const { t, i18n } = useTranslation()
   const locale = dateLocale(i18n.language)
   const scrollerRef = useRef<HTMLDivElement>(null)
-  const pickerRef = useRef<HTMLInputElement>(null)
 
   const today = startOfDay(new Date())
   const selected = parseISO(value)
@@ -33,13 +33,6 @@ export default function DateStrip({ value, onChange, allowPast = false, days = 1
       behavior: 'smooth',
     })
   }, [value])
-
-  const openPicker = () => {
-    const input = pickerRef.current
-    if (!input) return
-    if (typeof input.showPicker === 'function') input.showPicker()
-    else input.click()
-  }
 
   return (
     <div className="flex items-stretch gap-2">
@@ -76,27 +69,15 @@ export default function DateStrip({ value, onChange, allowPast = false, days = 1
           )
         })}
       </div>
-      <div className="relative shrink-0">
-        <button
-          type="button"
-          onClick={openPicker}
-          aria-label={t('schedule.selectDate')}
-          title={t('schedule.selectDate')}
-          className="flex h-15 w-12 items-center justify-center rounded-xl border border-line bg-surface text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
-        >
-          <CalendarDays className="size-5" />
-        </button>
-        <input
-          ref={pickerRef}
-          type="date"
-          tabIndex={-1}
-          aria-hidden
-          value={value}
-          min={allowPast ? undefined : format(today, 'yyyy-MM-dd')}
-          onChange={(e) => e.target.value && onChange(e.target.value)}
-          className="pointer-events-none absolute inset-0 opacity-0"
-        />
-      </div>
+      <DatePickerButton
+        value={value}
+        min={allowPast ? undefined : format(today, 'yyyy-MM-dd')}
+        onChange={onChange}
+        label={t('schedule.selectDate')}
+        className="flex h-15 w-12 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-ink-2 transition-colors hover:border-line-strong hover:text-ink aria-expanded:border-line-strong aria-expanded:text-ink"
+      >
+        <CalendarDays className="size-5" />
+      </DatePickerButton>
     </div>
   )
 }

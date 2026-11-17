@@ -119,6 +119,7 @@ export default {
     clientName: 'Имя клиента',
     clientPhone: 'Телефон клиента',
     date: 'Дата',
+    anyDate: 'Любая дата',
     startTime: 'Время начала',
     endTime: 'Время конца',
     totalAmount: 'Сумма',
@@ -210,6 +211,7 @@ export default {
     freeOf: 'Свободно {{free}} из {{total}} ч',
     prevMonth: 'Предыдущий месяц',
     nextMonth: 'Следующий месяц',
+    today: 'Сегодня',
     view: 'Вид расписания',
   },
   dashboard: {

@@ -115,6 +115,7 @@ export default {
     clientName: 'Mijoz ismi',
     clientPhone: 'Mijoz telefoni',
     date: 'Sana',
+    anyDate: 'Istalgan sana',
     startTime: 'Boshlanish vaqti',
     endTime: 'Tugash vaqti',
     totalAmount: 'Summa',
@@ -202,6 +203,7 @@ export default {
     freeOf: "{{total}} soatdan {{free}} tasi bo'sh",
     prevMonth: 'Oldingi oy',
     nextMonth: 'Keyingi oy',
+    today: 'Bugun',
     view: "Jadval ko'rinishi",
   },
   dashboard: {

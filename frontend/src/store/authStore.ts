@@ -10,7 +10,21 @@ interface AuthState {
   isAuthenticated: () => boolean
 }
 
-const storedToken = localStorage.getItem('token')
+export function isTokenExpired(token: string) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now()
+  } catch {
+    return true
+  }
+}
+
+let storedToken = localStorage.getItem('token')
+if (storedToken && isTokenExpired(storedToken)) {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  storedToken = null
+}
 const storedUserRaw = localStorage.getItem('user')
 
 let storedUser: User | null = null
