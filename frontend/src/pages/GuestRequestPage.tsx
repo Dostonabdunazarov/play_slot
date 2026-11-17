@@ -39,7 +39,7 @@ function Step({ state, title, hint, last }: { state: StepState; title: string; h
         {!last && <span className={`my-1 w-px flex-1 ${state === 'done' ? 'bg-brand' : 'bg-line'}`} />}
       </div>
       <div className={last ? '' : 'pb-4'}>
-        <div className={`text-[15px] font-semibold ${state === 'todo' ? 'text-ink-3' : 'text-ink'}`}>{title}</div>
+        <div className={`text-[0.9375rem] font-semibold ${state === 'todo' ? 'text-ink-3' : 'text-ink'}`}>{title}</div>
         {hint && <div className="text-sm text-ink-3 tabular">{hint}</div>}
       </div>
     </li>
@@ -101,7 +101,7 @@ function CopyRow({ value }: { value: string }) {
   }
   return (
     <div className="flex items-start gap-3 rounded-xl bg-sunken px-3.5 py-3">
-      <p className="min-w-0 flex-1 whitespace-pre-line break-words text-[15px] font-semibold leading-snug text-ink tabular">
+      <p className="min-w-0 flex-1 whitespace-pre-line break-words text-[0.9375rem] font-semibold leading-snug text-ink tabular">
         {value}
       </p>
       <button
@@ -110,7 +110,7 @@ function CopyRow({ value }: { value: string }) {
         className={buttonClass('secondary', 'sm', 'shrink-0')}
         aria-label={t('guest.copy')}
       >
-        {copied ? <Check className="size-4 text-brand" /> : <Copy className="size-4" />}
+        {copied ? <Check className="size-4 text-accent" /> : <Copy className="size-4" />}
         <span className="hidden sm:inline">{t('guest.copy')}</span>
       </button>
     </div>
@@ -198,7 +198,7 @@ export default function GuestRequestPage() {
     <Card className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to={`/venues/${r.venueId}`} className="text-[15px] font-semibold text-ink hover:underline">
+          <Link to={`/venues/${r.venueId}`} className="text-[0.9375rem] font-semibold text-ink hover:underline">
             {r.venueName}
           </Link>
           {r.venueAddress && <div className="mt-0.5 text-sm text-ink-2">{r.venueAddress}</div>}
@@ -235,10 +235,10 @@ export default function GuestRequestPage() {
       {back}
 
       <RequestStatusPill status={r.status} />
-      <h1 className="mt-3 text-[24px] font-bold leading-tight tracking-[-0.02em] text-ink">{heading.title}</h1>
-      <p className="mt-1.5 text-[15px] leading-relaxed text-ink-2">{heading.text}</p>
+      <h1 className="mt-3 text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-ink">{heading.title}</h1>
+      <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-ink-2">{heading.text}</p>
       {reason && r.status === 'Rejected' && (
-        <p className="mt-2 text-[15px] font-medium text-due">{t('guest.reason', { reason })}</p>
+        <p className="mt-2 text-[0.9375rem] font-medium text-due">{t('guest.reason', { reason })}</p>
       )}
 
       <div className="mt-5 space-y-3">
@@ -247,8 +247,8 @@ export default function GuestRequestPage() {
             {r.prepaymentAmount ? (
               <>
                 <div className="flex items-baseline justify-between gap-3">
-                  <div className="text-[15px] font-semibold text-ink">{t('guest.prepaymentTitle')}</div>
-                  <div className="text-[20px] font-bold tracking-[-0.01em] text-ink tabular">
+                  <div className="text-[0.9375rem] font-semibold text-ink">{t('guest.prepaymentTitle')}</div>
+                  <div className="text-[1.25rem] font-bold tracking-[-0.01em] text-ink tabular">
                     {formatMoney(r.prepaymentAmount)} {t('dashboard.som')}
                   </div>
                 </div>
@@ -258,7 +258,7 @@ export default function GuestRequestPage() {
               </>
             ) : (
               <>
-                <div className="text-[15px] font-semibold text-ink">{t('guest.paymentTitle')}</div>
+                <div className="text-[0.9375rem] font-semibold text-ink">{t('guest.paymentTitle')}</div>
                 <p className="mt-1 text-sm text-ink-2">
                   {t('guest.payOnSiteText', { total: formatMoney(r.totalAmount) })}
                 </p>
@@ -298,7 +298,7 @@ export default function GuestRequestPage() {
                 <Send className="size-4.5" />
               </span>
               <div className="min-w-0">
-                <div className="text-[15px] font-semibold text-ink">{t('guest.tgTitle')}</div>
+                <div className="text-[0.9375rem] font-semibold text-ink">{t('guest.tgTitle')}</div>
                 <div className="mt-0.5 text-sm text-ink-2">{t('guest.tgText')}</div>
               </div>
             </div>
@@ -306,7 +306,7 @@ export default function GuestRequestPage() {
               href={r.telegramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-tg text-[15px] font-semibold text-white transition-colors hover:bg-tg-hover"
+              className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-tg text-[0.9375rem] font-semibold text-white transition-colors hover:bg-tg-hover"
             >
               {t('guest.tgButton')}
             </a>
@@ -329,7 +329,7 @@ export default function GuestRequestPage() {
           <button
             type="button"
             onClick={() => setConfirmCancel(true)}
-            className="flex h-11 w-full items-center justify-center rounded-xl text-[15px] font-semibold text-due transition-colors hover:bg-due-soft"
+            className="flex h-11 w-full items-center justify-center rounded-xl text-[0.9375rem] font-semibold text-due transition-colors hover:bg-due-soft"
           >
             {t('guest.cancel')}
           </button>
@@ -357,7 +357,7 @@ export default function GuestRequestPage() {
             </>
           }
         >
-          <p className="text-[15px] text-ink-2">
+          <p className="text-[0.9375rem] text-ink-2">
             {when}, {r.venueName}. {t('guest.cancelConfirm')}
           </p>
         </Sheet>

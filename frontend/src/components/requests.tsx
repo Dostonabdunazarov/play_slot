@@ -22,7 +22,7 @@ export function RequestStatusPill({
 }) {
   const { t } = useTranslation()
   const tone = pillTone[status]
-  const sizeClass = size === 'sm' ? 'h-6 px-2.5 text-xs' : 'h-7 px-3 text-[13px]'
+  const sizeClass = size === 'sm' ? 'h-6 px-2.5 text-xs' : 'h-7 px-3 text-[0.8125rem]'
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full font-semibold ${sizeClass} ${tone.box}`}>
       <span className={`size-1.5 rounded-full ${tone.dot}`} aria-hidden />

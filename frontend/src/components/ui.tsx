@@ -79,12 +79,12 @@ export function PageHeader({
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-3 lg:mb-7">
       <div className="min-w-0">
-        <h1 className="text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink lg:text-[26px]">
+        <h1 className="text-[1.375rem] font-bold leading-tight tracking-[-0.02em] text-ink lg:text-[1.625rem]">
           {title}
         </h1>
         {description && <p className="mt-1 text-sm text-ink-3">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>
   )
 }
@@ -94,7 +94,7 @@ export function PaymentBadge({ status, className = '' }: { status: PaymentStatus
   const tone = paymentTone[status]
   return (
     <span
-      className={`inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold ${tone.box} ${className}`}
+      className={`inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap ${tone.box} ${className}`}
     >
       <span className={`size-1.5 rounded-full ${tone.dot}`} aria-hidden />
       {t(`bookings.paymentStatuses.${status.toLowerCase()}`)}
@@ -102,10 +102,18 @@ export function PaymentBadge({ status, className = '' }: { status: PaymentStatus
   )
 }
 
-export function Tag({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'danger' }) {
+export function Tag({
+  children,
+  tone = 'neutral',
+  className = '',
+}: {
+  children: ReactNode
+  tone?: 'neutral' | 'danger'
+  className?: string
+}) {
   const cls = tone === 'danger' ? 'bg-due-soft text-due' : 'bg-sunken text-ink-2'
   return (
-    <span className={`inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold ${cls}`}>
+    <span className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs font-semibold whitespace-nowrap ${cls} ${className}`}>
       {children}
     </span>
   )
@@ -134,7 +142,7 @@ export function MoneyLine({ booking, className = '' }: { booking: Booking; class
 }
 
 export const inputClass =
-  'block w-full h-11 rounded-xl border border-line-strong bg-surface px-3.5 text-[15px] text-ink placeholder:text-ink-3 transition-colors duration-150 hover:border-ink-3 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15 disabled:bg-sunken disabled:text-ink-3'
+  'block w-full h-11 rounded-xl border border-line-strong bg-surface px-3.5 text-[0.9375rem] text-ink placeholder:text-ink-3 transition-colors duration-150 hover:border-ink-3 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15 disabled:bg-sunken disabled:text-ink-3'
 
 export const textareaClass = inputClass.replace('h-11', 'min-h-24 py-2.5') + ' resize-none'
 
@@ -175,7 +183,7 @@ export function Segmented<T extends string | number>({
   label: string
 }) {
   return (
-    <div role="tablist" aria-label={label} className="inline-flex rounded-xl bg-sunken p-1">
+    <div role="tablist" aria-label={label} className="no-scrollbar inline-flex max-w-full overflow-x-auto rounded-xl bg-sunken p-1">
       {options.map((o) => {
         const on = o.value === value
         return (
@@ -185,7 +193,7 @@ export function Segmented<T extends string | number>({
             role="tab"
             aria-selected={on}
             onClick={() => onChange(o.value)}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors duration-150 ${
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium whitespace-nowrap transition-colors sm:px-3 duration-150 ${
               on ? 'bg-surface text-ink shadow-raise' : 'text-ink-3 hover:text-ink'
             }`}
           >
@@ -281,7 +289,7 @@ export function Sheet({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
       <div
-        className="absolute inset-0 bg-ink/40 animate-[fade-in_150ms_ease-out]"
+        className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-[fade-in_150ms_ease-out]"
         onClick={onClose}
         aria-hidden
       />

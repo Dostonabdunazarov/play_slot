@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { login } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
-import Logo from '../components/Logo'
-import { Button, Field, inputClass } from '../components/ui'
+import Logo, { LogoMark } from '../components/Logo'
+import PitchBackdrop from '../components/PitchBackdrop'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -37,90 +37,105 @@ export default function LoginPage() {
     }
   }
 
-  return (
-    <div className="grid min-h-dvh bg-ground lg:grid-cols-[1fr_minmax(0,560px)]">
-      <div className="relative hidden overflow-hidden lg:block">
-        <img
-          src="https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1600&q=80"
-          alt=""
-          className="absolute inset-0 size-full object-cover"
-        />
-        <div className="absolute inset-0 bg-ink/45" />
-        <div className="absolute inset-x-0 bottom-0 p-12 text-white">
-          <p className="max-w-md text-3xl font-bold leading-tight tracking-[-0.02em]">{t('auth.tagline')}</p>
-          <p className="mt-3 max-w-md text-base text-white/80">{t('auth.taglineSub')}</p>
-        </div>
-      </div>
+  const darkInput =
+    'block h-12 w-full rounded-[10px] border border-line bg-surface px-4 text-[0.9375rem] text-ink transition-[border-color,box-shadow] duration-150 placeholder:text-ink-3/70 hover:border-line-strong focus:border-accent focus:ring-3 focus:ring-accent/20 focus:outline-none'
 
-      <div className="flex flex-col px-5 pt-5 pb-8 sm:px-10">
+  return (
+    <div className="relative min-h-dvh overflow-hidden bg-ground text-ink">
+      <PitchBackdrop />
+      <div aria-hidden className="glow-brand pointer-events-none absolute inset-x-0 top-0 h-96" />
+
+      <div className="relative mx-auto flex min-h-dvh max-w-7xl 2xl:max-w-[100rem] flex-col px-5 pt-5 pb-8 sm:px-10">
         <div className="flex items-center justify-between">
-          <Logo />
+          <Link to="/" aria-label="Futsal">
+            <Logo />
+          </Link>
           <Link
             to="/venues"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[10px] px-2.5 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
           >
             <ArrowLeft className="size-4" />
-            {t('nav.venues')}
+            {t('auth.toVenues')}
           </Link>
         </div>
 
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
-          <img src="/logo.svg" alt="Futsal" width={112} height={138} className="mb-6 h-auto w-28" />
-          <h1 className="text-[26px] font-bold tracking-[-0.02em] text-ink">{t('auth.loginTitle')}</h1>
-          <p className="mt-1.5 text-[15px] text-ink-3">{t('auth.loginSubtitle')}</p>
+        <div className="flex flex-1 items-center lg:justify-between">
+          <div className="hidden max-w-lg flex-1 lg:block">
+            <p className="text-5xl leading-[1.08] font-bold tracking-tight">
+              {t('auth.staffTagline')} <span className="gradient-text">{t('auth.staffTaglineAccent')}</span>
+            </p>
+            <p className="mt-4 text-base text-ink-3">{t('auth.staffTaglineSub')}</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <Field label={t('auth.email')} htmlFor="email">
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                inputMode="email"
-                aria-invalid={failed}
-                className={`${inputClass} ${failed ? 'border-due' : ''}`}
-                placeholder="name@example.com"
-              />
-            </Field>
+          <div className="mx-auto my-10 w-full max-w-md rounded-2xl border border-white/10 bg-raised/60 p-6 shadow-float backdrop-blur-xl backdrop-saturate-150 sm:p-8 lg:mx-0 lg:ml-16">
+            <LogoMark className="mb-6 size-14" />
+            <h1 className="text-2xl font-semibold tracking-tight">{t('auth.staffTitle')}</h1>
+            <p className="mt-1.5 text-sm text-ink-3">{t('auth.staffSub')}</p>
 
-            <Field label={t('auth.password')} htmlFor="password">
-              <div className="relative">
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink-2">
+                  {t('auth.email')}
+                </label>
                 <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="current-password"
+                  autoComplete="email"
+                  inputMode="email"
                   aria-invalid={failed}
-                  className={`${inputClass} pr-12 ${failed ? 'border-due' : ''}`}
+                  className={`${darkInput} ${failed ? 'border-due' : ''}`}
+                  placeholder="name@example.com"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? t('users.hidePassword') : t('users.showPassword')}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-ink-3 transition-colors hover:text-ink"
-                >
-                  {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
-                </button>
               </div>
-            </Field>
 
-            {failed && (
-              <p role="alert" className="rounded-xl bg-due-soft px-3.5 py-2.5 text-sm font-medium text-due">
-                {t('auth.loginError')}
-              </p>
-            )}
+              <div>
+                <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ink-2">
+                  {t('auth.password')}
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    aria-invalid={failed}
+                    className={`${darkInput} pr-12 ${failed ? 'border-due' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? t('users.hidePassword') : t('users.showPassword')}
+                    className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-ink-3 transition-colors hover:text-ink"
+                  >
+                    {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
+                  </button>
+                </div>
+              </div>
 
-            <Button type="submit" size="lg" loading={loading} className="w-full">
-              {t('auth.login')}
-            </Button>
-          </form>
+              {failed && (
+                <p role="alert" className="rounded-xl bg-due/20 px-3.5 py-2.5 text-sm font-medium text-[#ffb4b8] ring-1 ring-due/50">
+                  {t('auth.loginError')}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="gradient-brand inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[0.9375rem] font-semibold text-white shadow-sm transition-[filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-60"
+              >
+                {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                {t('auth.login')}
+              </button>
+            </form>
+          </div>
         </div>
 
-        <p className="text-center text-xs text-ink-3">Futsal © {new Date().getFullYear()}</p>
+        <p className="text-center text-xs text-ink-3 lg:text-right">Futsal © {new Date().getFullYear()}</p>
       </div>
     </div>
   )

@@ -65,7 +65,7 @@ export default function MyRequestsPage() {
                     <RequestStatusPill status={r.status} size="sm" />
                     {r.status === 'Pending' && <DeadlineChip expiresAt={r.expiresAt} now={now} />}
                   </div>
-                  <div className="mt-2 text-[17px] font-bold tracking-[-0.01em] text-ink tabular">
+                  <div className="mt-2 text-[1.0625rem] font-bold tracking-[-0.01em] text-ink tabular">
                     {dayLabel(r.date, t, i18n.language)} · {timeRange(r.startTime, r.endTime)}
                   </div>
                   <div className="mt-0.5 truncate text-sm text-ink-2">

@@ -65,13 +65,13 @@ export default function DateStrip({ value, onChange, allowPast = false, days = 1
               }`}
             >
               <span
-                className={`text-[11px] font-semibold uppercase leading-none ${
+                className={`text-[0.6875rem] font-semibold uppercase leading-none ${
                   on ? 'text-white/80' : weekend ? 'text-due' : 'text-ink-3'
                 }`}
               >
                 {isToday(d) ? t('schedule.todayShort') : format(d, 'EEEEEE', { locale })}
               </span>
-              <span className="mt-1.5 text-[17px] font-bold leading-none tabular">{format(d, 'd')}</span>
+              <span className="mt-1.5 text-[1.0625rem] font-bold leading-none tabular">{format(d, 'd')}</span>
             </button>
           )
         })}

@@ -32,7 +32,7 @@ function RequestCard({
     <article className="rounded-2xl border border-line bg-surface p-4">
       <Link to={`/requests/${r.id}`} className="-m-1 flex items-start justify-between gap-3 rounded-xl p-1">
         <div className="min-w-0">
-          <div className="text-[17px] font-bold tracking-[-0.01em] text-ink tabular">
+          <div className="text-[1.0625rem] font-bold tracking-[-0.01em] text-ink tabular">
             {dayLabel(r.date, t, i18n.language)} · {timeRange(r.startTime, r.endTime)}
           </div>
           <div className="mt-0.5 text-sm text-ink-2">
@@ -48,7 +48,7 @@ function RequestCard({
       </Link>
       <div className="mt-3 flex items-center gap-3 border-t border-line pt-3">
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold text-ink">{r.clientName}</div>
+          <div className="truncate text-[0.9375rem] font-semibold text-ink">{r.clientName}</div>
           <div className="text-sm text-ink-3 tabular">{formatPhone(r.clientPhone)}</div>
         </div>
         <a

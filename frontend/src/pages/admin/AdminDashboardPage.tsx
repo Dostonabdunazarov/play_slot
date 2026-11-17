@@ -37,7 +37,7 @@ function Kpi({
         {label}
         {to && <ChevronRight className="size-4" />}
       </div>
-      <div className={`mt-1.5 text-2xl font-bold tracking-[-0.02em] tabular lg:text-[28px] ${toneClass}`}>
+      <div className={`mt-1.5 text-2xl font-bold tracking-[-0.02em] tabular lg:text-[1.75rem] ${toneClass}`}>
         {value}
         {unit && <span className="ml-1 text-sm font-medium text-ink-3">{unit}</span>}
       </div>

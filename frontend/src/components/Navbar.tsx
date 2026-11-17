@@ -18,6 +18,7 @@ import { useAuthStore } from '../store/authStore'
 import { getPendingCount } from '../api/bookingRequests'
 import { useRequestTokens } from '../utils/guestRequests'
 import Logo from './Logo'
+import LangMenu from './LangMenu'
 
 interface NavItem {
   to: string
@@ -74,31 +75,51 @@ function useNavItems(): NavItem[] {
   ]
 }
 
-function useLang() {
-  const { i18n } = useTranslation()
-  const toggle = () => {
-    const next = i18n.language === 'ru' ? 'uz' : 'ru'
-    i18n.changeLanguage(next)
-    localStorage.setItem('lang', next)
-    document.documentElement.lang = next
-  }
-  return { lang: i18n.language, toggle }
-}
-
-function LangButton({ className = '' }: { className?: string }) {
+export function PublicHeader() {
   const { t } = useTranslation()
-  const { lang, toggle } = useLang()
+  const tokens = useRequestTokens()
+  const link = ({ isActive }: { isActive: boolean }) =>
+    `transition-colors duration-150 ${isActive ? 'text-white' : 'text-white/60 hover:text-white'}`
+
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      title={t('nav.switchLang')}
-      aria-label={t('nav.switchLang')}
-      className={`inline-flex h-9 items-center gap-1 rounded-lg border border-line px-1 text-xs font-semibold transition-colors duration-150 hover:border-line-strong ${className}`}
-    >
-      <span className={`rounded-md px-1.5 py-1 ${lang === 'ru' ? 'bg-ink text-white' : 'text-ink-3'}`}>RU</span>
-      <span className={`rounded-md px-1.5 py-1 ${lang === 'uz' ? 'bg-ink text-white' : 'text-ink-3'}`}>UZ</span>
-    </button>
+    <header className="sticky top-0 z-50 border-b border-line bg-ground/80 text-white backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl 2xl:max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
+        <div className="flex items-center gap-9">
+          <Link to="/" aria-label="Futsal" className="flex items-center">
+            <Logo dark />
+          </Link>
+          <nav aria-label={t('nav.main')} className="hidden items-center gap-6 text-sm font-medium sm:flex">
+            <NavLink to="/venues" className={link}>
+              {t('nav.venues')}
+            </NavLink>
+            {tokens.length > 0 && (
+              <NavLink to="/my-requests" className={link}>
+                {t('nav.myRequests')}
+              </NavLink>
+            )}
+          </nav>
+        </div>
+        <div className="flex items-center gap-2">
+          {tokens.length > 0 && (
+            <Link
+              to="/my-requests"
+              aria-label={t('nav.myRequests')}
+              className="inline-flex size-9 items-center justify-center rounded-lg text-white/75 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            >
+              <Ticket className="size-4.5" />
+            </Link>
+          )}
+          <LangMenu dark />
+          <Link
+            to="/login"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[10px] px-3 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+          >
+            <LogIn className="size-4" />
+            {t('auth.login')}
+          </Link>
+        </div>
+      </div>
+    </header>
   )
 }
 
@@ -120,9 +141,9 @@ export function Sidebar() {
   const handleLogout = useLogout()
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line bg-surface lg:flex">
+    <aside className="sticky top-0 hidden h-dvh w-[15.5rem] shrink-0 flex-col border-r border-line bg-ground/80 backdrop-blur-md lg:flex">
       <div className="flex h-16 items-center px-5">
-        <Link to="/" aria-label="Futsal">
+        <Link to="/" aria-label="Futsal" className="flex items-center">
           <Logo />
         </Link>
       </div>
@@ -132,17 +153,17 @@ export function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors duration-150 ${
+              `flex h-10 items-center gap-3 rounded-xl px-3 text-[0.9375rem] font-medium transition-colors duration-150 ${
                 isActive ? 'bg-brand-soft text-brand-ink' : 'text-ink-2 hover:bg-sunken hover:text-ink'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <Icon className={`size-4.5 ${isActive ? 'text-brand' : 'text-ink-3'}`} strokeWidth={2} />
+                <Icon className={`size-4.5 ${isActive ? 'text-accent' : 'text-ink-3'}`} strokeWidth={2} />
                 <span className="flex-1">{label}</span>
                 {!!badge && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-due px-1.5 text-[11px] font-bold text-white tabular">
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-due px-1.5 text-[0.6875rem] font-bold text-white tabular">
                     {badge}
                   </span>
                 )}
@@ -152,7 +173,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="space-y-3 border-t border-line p-4">
-        <LangButton />
+        <LangMenu placement="up" />
         {loggedIn ? (
           <div className="flex items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sunken text-sm font-semibold text-ink-2">
@@ -195,9 +216,9 @@ export function TopBar() {
   const tokens = useRequestTokens()
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur-sm lg:hidden">
+    <header className="sticky top-0 z-50 border-b border-line bg-ground/80 backdrop-blur-md lg:hidden">
       <div className="flex h-14 items-center justify-between gap-3 px-4">
-        <Link to="/" aria-label="Futsal">
+        <Link to="/" aria-label="Futsal" className="flex items-center">
           <Logo />
         </Link>
         <div className="flex items-center gap-1.5">
@@ -211,7 +232,7 @@ export function TopBar() {
               <span className="hidden sm:inline">{t('nav.myRequests')}</span>
             </Link>
           )}
-          <LangButton />
+          <LangMenu />
           {loggedIn ? (
             <button
               type="button"
@@ -246,7 +267,7 @@ export function TabBar() {
   return (
     <nav
       aria-label={t('nav.main')}
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ground/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
       <div className="mx-auto flex max-w-xl">
         {items.map(({ to, short, icon: Icon, badge }) => (
@@ -254,8 +275,8 @@ export function TabBar() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors duration-150 ${
-                isActive ? 'text-brand' : 'text-ink-3 hover:text-ink'
+              `flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-semibold transition-colors duration-150 ${
+                isActive ? 'text-accent' : 'text-ink-3 hover:text-ink'
               }`
             }
           >
@@ -268,7 +289,7 @@ export function TabBar() {
                 >
                   <Icon className="size-5" strokeWidth={isActive ? 2.25 : 2} />
                   {!!badge && (
-                    <span className="absolute -top-1 right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-due px-1 text-[10px] font-bold text-white tabular">
+                    <span className="absolute -top-1 right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-due px-1 text-[0.625rem] font-bold text-white tabular">
                       {badge}
                     </span>
                   )}

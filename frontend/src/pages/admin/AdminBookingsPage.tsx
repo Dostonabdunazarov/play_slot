@@ -139,8 +139,8 @@ export default function AdminBookingsPage() {
                   return (
                     <Card key={booking.id} className={`p-4 ${cancelled ? 'opacity-60' : ''}`}>
                       <div className="flex items-start gap-3">
-                        <div className="w-[52px] shrink-0 tabular">
-                          <div className="text-[15px] font-bold leading-tight text-ink">{hhmm(booking.startTime)}</div>
+                        <div className="w-[3.25rem] shrink-0 tabular">
+                          <div className="text-[0.9375rem] font-bold leading-tight text-ink">{hhmm(booking.startTime)}</div>
                           <div className="text-xs text-ink-3">{hhmm(booking.endTime)}</div>
                         </div>
                         <div className="min-w-0 flex-1">
@@ -157,7 +157,7 @@ export default function AdminBookingsPage() {
                             <span className="font-medium text-ink-2">{booking.venueName}</span>
                             <a
                               href={phoneLink(booking.clientPhone)}
-                              className="inline-flex items-center gap-1 text-brand tabular hover:underline"
+                              className="inline-flex items-center gap-1 text-accent tabular hover:underline"
                             >
                               <Phone className="size-3.5" />
                               {booking.clientPhone}
@@ -175,7 +175,7 @@ export default function AdminBookingsPage() {
                       </div>
 
                       {booking.status === 'Active' && (
-                        <div className="mt-3 flex gap-2 border-t border-line pt-3 sm:justify-end">
+                        <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3 sm:justify-end">
                           {/* Payment stays editable even for past bookings (paid later). */}
                           <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" onClick={() => setPaymentModal(booking)}>
                             {t('bookings.updatePayment')}

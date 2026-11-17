@@ -267,7 +267,7 @@ export default function AdminVenuesPage() {
         <div className="space-y-2.5">
           {venues.map((venue) => (
             <Card key={venue.id} className="flex items-center gap-3 p-3 sm:gap-4">
-              <div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl bg-sunken sm:h-[72px] sm:w-28">
+              <div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl bg-sunken sm:h-[4.5rem] sm:w-28">
                 <img
                   src={venue.imageUrl || '/venue-placeholder.svg'}
                   onError={(e) => { e.currentTarget.src = '/venue-placeholder.svg' }}
@@ -276,7 +276,7 @@ export default function AdminVenuesPage() {
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
                   <span className="truncate font-bold text-ink">{venue.name}</span>
                   <span className="shrink-0 text-sm font-semibold text-ink tabular">
                     {formatMoney(venue.pricePerHour)}
@@ -292,7 +292,7 @@ export default function AdminVenuesPage() {
                     <Clock className="size-3.5" />
                     {hhmm(venue.openTime)}–{hhmm(venue.closeTime)}
                   </span>
-                  <a href={phoneLink(venue.phone)} className="hidden items-center gap-1 tabular hover:text-brand sm:inline-flex">
+                  <a href={phoneLink(venue.phone)} className="hidden items-center gap-1 tabular hover:text-accent sm:inline-flex">
                     <Phone className="size-3.5" />
                     {venue.phone}
                   </a>

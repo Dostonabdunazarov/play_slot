@@ -250,16 +250,17 @@ export default function AdminUsersPage() {
                   {user.fullName.trim().charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[1.2fr_1.4fr_1fr] sm:items-center sm:gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-semibold text-ink">{user.fullName}</span>
-                    {user.id === currentUserId && <span className="text-xs text-ink-3">({t('users.you')})</span>}
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="max-w-full truncate font-semibold text-ink">{user.fullName}</span>
+                    {user.id === currentUserId && <span className="shrink-0 text-xs text-ink-3">({t('users.you')})</span>}
+                    <Tag className="sm:hidden">{t(`users.roles.${user.role.toLowerCase()}`)}</Tag>
                   </div>
                   <div className="truncate text-sm text-ink-3">{user.email}</div>
-                  <a href={phoneLink(user.phone)} className="block truncate text-sm text-ink-2 tabular hover:text-brand">
+                  <a href={phoneLink(user.phone)} className="block truncate text-sm text-ink-2 tabular hover:text-accent">
                     {user.phone}
                   </a>
                 </div>
-                <span className="flex shrink-0 sm:w-32 sm:justify-end"><Tag>{t(`users.roles.${user.role.toLowerCase()}`)}</Tag></span>
+                <span className="hidden shrink-0 sm:flex sm:w-32 sm:justify-end"><Tag>{t(`users.roles.${user.role.toLowerCase()}`)}</Tag></span>
                 <IconButton
                   label={t('common.delete')}
                   tone="danger"

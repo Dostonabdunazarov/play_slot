@@ -1,43 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  --color-ground: #f4f6f4;
-  --color-surface: #ffffff;
-  --color-sunken: #eef1ee;
-  --color-ink: #101a14;
-  --color-ink-2: #46524b;
-  --color-ink-3: #66716a;
-  --color-line: #e2e7e3;
-  --color-line-strong: #cbd3cd;
+  --color-ground: #080a0f;
+  --color-surface: #0d1117;
+  --color-raised: #12181f;
+  --color-sunken: #161d27;
+  --color-ink: #f1f5f9;
+  --color-ink-2: #cbd5e1;
+  --color-ink-3: #94a3b8;
+  --color-line: #1a212b;
+  --color-line-strong: #273040;
 
-  --color-brand: #15803d;
-  --color-brand-hover: #116932;
-  --color-brand-press: #0d5428;
-  --color-brand-soft: #e6f4ea;
-  --color-brand-ink: #0d5a2a;
+  --color-brand: #047857;
+  --color-brand-hover: #05906a;
+  --color-brand-press: #065f46;
+  --color-brand-soft: #0d2a26;
+  --color-brand-ink: #5eead4;
+  --color-accent: #2dd4bf;
+  --color-accent-hover: #5eead4;
 
-  --color-paid: #15803d;
-  --color-paid-soft: #e3f4e8;
-  --color-pre: #9a5800;
-  --color-pre-dot: #e59a0b;
-  --color-pre-soft: #fdf1d6;
-  --color-due: #b4232b;
-  --color-due-soft: #fdeceb;
+  --color-paid: #22c55e;
+  --color-paid-soft: #0f2418;
+  --color-pre: #fbbf24;
+  --color-pre-dot: #f59e0b;
+  --color-pre-soft: #2a2010;
+  --color-due: #ef4444;
+  --color-due-soft: #2a1316;
 
-  --color-wait: #2c5aa0;
-  --color-wait-dot: #4a7fd4;
-  --color-wait-soft: #e9f0fb;
-  --color-wait-line: #b9cdee;
+  --color-wait: #7cb2ff;
+  --color-wait-dot: #3b82f6;
+  --color-wait-soft: #0f1d33;
+  --color-wait-line: #1f3a66;
+
+  --color-night: #080a0f;
+  --color-night-2: #0d1117;
+  --color-neon: #2dd4bf;
+  --color-neon-ink: #042f2e;
 
   --color-tg: #2a8bcd;
-  --color-tg-hover: #2379b4;
-  --color-tg-soft: #e8f3fb;
+  --color-tg-hover: #3b9ad9;
+  --color-tg-soft: #0f2232;
 
-  --shadow-raise: 0 1px 2px rgb(16 26 20 / 0.05), 0 2px 8px rgb(16 26 20 / 0.04);
-  --shadow-float: 0 8px 24px rgb(16 26 20 / 0.12), 0 2px 6px rgb(16 26 20 / 0.06);
+  --shadow-raise: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 12px rgb(0 0 0 / 0.25);
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px rgb(0 0 0 / 0.36);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -48,6 +56,7 @@
   }
 
   html {
+    color-scheme: dark;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
@@ -58,7 +67,8 @@
     font-family: var(--font-sans);
     background-color: var(--color-ground);
     color: var(--color-ink);
-    caret-color: var(--color-brand);
+    caret-color: var(--color-accent);
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'tnum' 0;
@@ -69,12 +79,12 @@
   }
 
   ::selection {
-    background: #bfe5cb;
-    color: var(--color-ink);
+    background: var(--color-brand);
+    color: #fff;
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-brand);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
 
@@ -111,7 +121,29 @@
 }
 
 @utility hatch {
-  background-image: repeating-linear-gradient(135deg, var(--color-wait-soft) 0 7px, #f6f9fe 7px 14px);
+  background-image: repeating-linear-gradient(135deg, var(--color-wait-soft) 0 7px, #0b1626 7px 14px);
+}
+
+@utility pitch-lines {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.07) 2px, transparent 2px),
+    radial-gradient(circle at 50% 120%, transparent 0 139px, rgb(255 255 255 / 0.08) 140px 142px, transparent 143px);
+  background-size: 100% 50%, 100% 100%;
+}
+
+@utility gradient-brand {
+  background-image: linear-gradient(135deg, #047857 0%, #115e59 50%, #0f766e 100%);
+}
+
+@utility gradient-text {
+  background-image: linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility glow-brand {
+  background: radial-gradient(45% 40% at 50% 0%, color-mix(in oklab, #047857 26%, transparent) 0%, transparent 70%);
 }
 
 @utility no-scrollbar {
@@ -157,5 +189,40 @@
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+.pitch-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: #5eead4;
+  --backdrop-opacity: 0.13;
+  -webkit-mask-image: radial-gradient(68% 60% at 50% 40%, rgb(0 0 0 / 0.45) 0%, rgb(0 0 0 / 0.75) 55%, #000 100%);
+  mask-image: radial-gradient(68% 60% at 50% 40%, rgb(0 0 0 / 0.45) 0%, rgb(0 0 0 / 0.75) 55%, #000 100%);
+}
+
+.pitch-backdrop__icon {
+  position: absolute;
+  opacity: var(--backdrop-opacity);
+  animation: pitch-backdrop-breathe 14s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes pitch-backdrop-breathe {
+  0%,
+  100% {
+    opacity: calc(var(--backdrop-opacity) * 0.75);
+  }
+  50% {
+    opacity: var(--backdrop-opacity);
+  }
+}
+
+@media (max-width: 640px) {
+  .pitch-backdrop {
+    --backdrop-opacity: 0.09;
   }
 }

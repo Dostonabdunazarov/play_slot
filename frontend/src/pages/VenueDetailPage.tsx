@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
@@ -58,7 +58,7 @@ function BookedSlot({ booking }: { booking: Booking }) {
       >
         <span className={`size-2 shrink-0 rounded-full ${paymentDotClass(booking.paymentStatus)}`} aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold text-ink">{booking.clientName}</span>
+          <span className="block truncate text-[0.9375rem] font-semibold text-ink">{booking.clientName}</span>
           <span className="block truncate text-xs text-ink-2 tabular">{booking.clientPhone}</span>
         </span>
         <span className="hidden sm:block">
@@ -206,7 +206,7 @@ function RequestSheet({
           <div className="text-sm font-semibold text-ink">{venue.name}</div>
           <div className="mt-2 flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[22px] font-bold leading-none tracking-[-0.02em] text-ink tabular">
+              <div className="text-[1.375rem] font-bold leading-none tracking-[-0.02em] text-ink tabular">
                 {hourLabel(selection.start)}–{hourLabel(end)}
               </div>
               <div className="mt-1.5 text-sm text-ink-2">
@@ -215,7 +215,7 @@ function RequestSheet({
             </div>
             <div className="shrink-0 text-right">
               <div className="text-xs text-ink-3">{t('guest.sum')}</div>
-              <div className="text-[17px] font-bold text-ink tabular">{formatMoney(total)}</div>
+              <div className="text-[1.0625rem] font-bold text-ink tabular">{formatMoney(total)}</div>
             </div>
           </div>
         </div>
@@ -243,14 +243,14 @@ function RequestSheet({
                 phoneError ? 'border-due' : 'border-line-strong hover:border-ink-3'
               }`}
             >
-              <span className="pl-3.5 text-[15px] text-ink tabular">+998</span>
+              <span className="pl-3.5 text-[0.9375rem] text-ink tabular">+998</span>
               <input
                 id="guest-phone"
                 type="tel"
                 inputMode="numeric"
                 autoComplete="tel-national"
                 placeholder="90 123 45 67"
-                className="h-full min-w-0 flex-1 rounded-r-xl bg-transparent pr-3.5 pl-1.5 text-[15px] text-ink tabular placeholder:text-ink-3 focus:outline-none"
+                className="h-full min-w-0 flex-1 rounded-r-xl bg-transparent pr-3.5 pl-1.5 text-[0.9375rem] text-ink tabular placeholder:text-ink-3 focus:outline-none"
                 value={phone}
                 onChange={(e) => {
                   setPhone(formatPhoneInput(e.target.value))
@@ -310,8 +310,15 @@ export default function VenueDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const loggedIn = useAuthStore((s) => s.isAuthenticated())
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [selection, setSelection] = useState<Selection | null>(null)
+  const [params] = useSearchParams()
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = params.get('date')
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= format(new Date(), 'yyyy-MM-dd') ? d : format(new Date(), 'yyyy-MM-dd')
+  })
+  const [rawSelection, setSelection] = useState<Selection | null>(() => {
+    const h = Number(params.get('hour'))
+    return params.get('hour') !== null && Number.isInteger(h) && h >= 0 && h < 24 ? { start: h, count: 1 } : null
+  })
   const [formOpen, setFormOpen] = useState(false)
   const now = useNow(60_000)
 
@@ -331,7 +338,7 @@ export default function VenueDetailPage() {
     return (
       <div className="grid gap-5 lg:grid-cols-[minmax(0,360px)_1fr]" role="status" aria-label={t('common.loading')}>
         <Skeleton className="h-80 rounded-2xl" />
-        <Skeleton className="h-[480px] rounded-2xl" />
+        <Skeleton className="h-[30rem] rounded-2xl" />
       </div>
     )
   if (!venue)
@@ -361,6 +368,14 @@ export default function VenueDetailPage() {
   })
 
   const freeCount = hours.filter((h) => !bookingByHour.has(h) && !isPastHour(h)).length
+  const selection =
+    rawSelection &&
+    !bookingsLoading &&
+    Array.from({ length: rawSelection.count }, (_, i) => rawSelection.start + i).every(
+      (h) => h >= openHour && h < closeHour && !bookingByHour.has(h) && !isPastHour(h) && !isSoonHour(h)
+    )
+      ? rawSelection
+      : null
   const inSelection = (h: number) => !!selection && h >= selection.start && h < selection.start + selection.count
 
   const toggleHour = (h: number) => {
@@ -394,7 +409,7 @@ export default function VenueDetailPage() {
 
   const selectionSummary = selection && (
     <div className="min-w-0 flex-1">
-      <div className="text-[15px] font-bold text-ink tabular">
+      <div className="text-[0.9375rem] font-bold text-ink tabular">
         {hourLabel(selection.start)}–{hourLabel(selection.start + selection.count)} ·{' '}
         {t('guest.hoursShort', { count: selection.count })}
       </div>
@@ -421,7 +436,7 @@ export default function VenueDetailPage() {
           className="flex min-h-12 items-center justify-between rounded-xl border border-line px-3.5 text-sm transition-colors hover:border-line-strong hover:bg-sunken"
         >
           <span className="text-ink-2">{t('guest.soon')}</span>
-          <span className="inline-flex items-center gap-1.5 font-semibold text-brand">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-accent">
             <Phone className="size-3.5" aria-hidden />
             {t('guest.byCall')}
           </span>
@@ -470,7 +485,7 @@ export default function VenueDetailPage() {
         className="group flex min-h-12 w-full items-center justify-between rounded-xl border border-dashed border-line-strong px-3.5 text-left transition-colors duration-150 hover:border-brand hover:bg-brand-soft"
       >
         <span className="text-sm font-medium text-ink-2">{t('bookings.free')}</span>
-        <span className="inline-flex items-center gap-1 text-sm font-semibold text-brand">
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent">
           <Plus className="size-4" />
           {t('bookings.book')}
         </span>
@@ -489,7 +504,7 @@ export default function VenueDetailPage() {
       </Link>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:gap-7">
-        <Card className="overflow-hidden lg:sticky lg:top-9">
+        <Card className={`overflow-hidden lg:sticky ${loggedIn ? 'lg:top-9' : 'lg:top-24'}`}>
           <div className="aspect-[16/9] bg-sunken">
             <img
               src={venue.imageUrl || '/venue-placeholder.svg'}
@@ -499,7 +514,7 @@ export default function VenueDetailPage() {
             />
           </div>
           <div className="p-4 lg:p-5">
-            <h1 className="text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink">{venue.name}</h1>
+            <h1 className="text-[1.375rem] font-bold leading-tight tracking-[-0.02em] text-ink">{venue.name}</h1>
             <div className="mt-1.5 flex items-start gap-1.5 text-sm text-ink-2">
               <MapPin className="mt-0.5 size-4 shrink-0 text-ink-3" />
               {venue.address}
@@ -592,8 +607,8 @@ export default function VenueDetailPage() {
                     className={`flex items-start gap-3 ${joinedTop ? '' : 'pt-1.5'} ${joinedBottom ? '' : 'pb-1.5'}`}
                   >
                     <div className={`w-14 shrink-0 pt-3 tabular ${past && !booking ? 'opacity-50' : ''}`}>
-                      <div className="text-[15px] font-bold leading-none text-ink">{hourLabel(hour)}</div>
-                      <div className="mt-1 text-[11px] leading-none text-ink-3">{hourLabel(hour + 1)}</div>
+                      <div className="text-[0.9375rem] font-bold leading-none text-ink">{hourLabel(hour)}</div>
+                      <div className="mt-1 text-[0.6875rem] leading-none text-ink-3">{hourLabel(hour + 1)}</div>
                     </div>
                     <div className="min-w-0 flex-1">
                       {loggedIn ? renderStaffSlot(hour, booking, past) : renderGuestSlot(hour, booking, past)}

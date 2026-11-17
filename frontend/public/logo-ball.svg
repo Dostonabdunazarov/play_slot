@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40.5 5.5 39 39">
+  <defs>
+    <radialGradient id="b" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d6dcd8"/>
+    </radialGradient>
+    <clipPath id="c"><circle cx="60" cy="25" r="19"/></clipPath>
+  </defs>
+  <circle cx="60" cy="25" r="19" fill="url(#b)"/>
+  <g clip-path="url(#c)" fill="#111814" stroke="#111814" stroke-width="1.2" stroke-linejoin="round">
+    <polygon points="60.00,19.60 65.14,23.33 63.17,29.37 56.83,29.37 54.86,23.33"/>
+    <polygon points="74.22,5.42 76.11,11.24 71.17,14.83 66.22,11.24 68.11,5.42"/>
+    <polygon points="83.02,32.48 78.07,36.07 73.12,32.48 75.01,26.66 81.13,26.66"/>
+    <polygon points="60.00,49.20 55.05,45.61 56.94,39.79 63.06,39.79 64.95,45.61"/>
+    <polygon points="36.98,32.48 38.87,26.66 44.99,26.66 46.88,32.48 41.93,36.07"/>
+    <polygon points="45.78,5.42 51.89,5.42 53.78,11.24 48.83,14.83 43.89,11.24"/>
+    <line x1="60.00" y1="19.60" x2="60.00" y2="12.80"/>
+    <line x1="65.14" y1="23.33" x2="71.60" y2="21.23"/>
+    <line x1="63.17" y1="29.37" x2="67.17" y2="34.87"/>
+    <line x1="56.83" y1="29.37" x2="52.83" y2="34.87"/>
+    <line x1="54.86" y1="23.33" x2="48.40" y2="21.23"/>
+  </g>
+  <circle cx="60" cy="25" r="18.4" fill="none" stroke="#111814" stroke-width="1.2"/>
+</svg>

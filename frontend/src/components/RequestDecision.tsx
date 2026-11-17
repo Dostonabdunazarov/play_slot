@@ -64,7 +64,7 @@ export function RejectSheet({
             return (
               <label
                 key={o.value}
-                className={`flex h-12 cursor-pointer items-center justify-between rounded-xl px-4 text-[15px] transition-colors duration-150 ${
+                className={`flex h-12 cursor-pointer items-center justify-between rounded-xl px-4 text-[0.9375rem] transition-colors duration-150 ${
                   on
                     ? 'border-2 border-brand bg-brand-soft font-semibold text-brand-ink'
                     : 'border border-line-strong font-medium text-ink hover:bg-sunken'

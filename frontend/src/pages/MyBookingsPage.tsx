@@ -43,7 +43,7 @@ export default function MyBookingsPage() {
   })
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <PageHeader
         title={t('bookings.myBookings')}
         description={bookings.length ? t('bookings.count', { count: bookings.length }) : undefined}
@@ -69,7 +69,7 @@ export default function MyBookingsPage() {
                     <div className="text-xs font-medium text-ink-3">{booking.venueName}</div>
                     <div className="mt-0.5 text-base font-bold text-ink">
                       {formatDate(booking.date, i18n.language)}
-                      <span className="ml-2 font-semibold text-ink-2 tabular">
+                      <span className="ml-2 font-semibold whitespace-nowrap text-ink-2 tabular">
                         {hhmm(booking.startTime)}–{hhmm(booking.endTime)}
                       </span>
                     </div>
@@ -83,7 +83,7 @@ export default function MyBookingsPage() {
 
                 <div className="mt-3 flex items-center gap-2 text-sm text-ink-2">
                   <span className="font-semibold text-ink">{booking.clientName}</span>
-                  <a href={phoneLink(booking.clientPhone)} className="text-brand tabular hover:underline">
+                  <a href={phoneLink(booking.clientPhone)} className="text-accent tabular hover:underline">
                     {booking.clientPhone}
                   </a>
                 </div>
@@ -92,11 +92,11 @@ export default function MyBookingsPage() {
 
                 <MoneyLine booking={booking} className="mt-3 rounded-xl bg-sunken px-3 py-2.5" />
 
-                <div className="mt-3 flex items-center justify-between gap-3">
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-xs text-ink-3 tabular">
                     {t('bookings.createdAt')} {format(new Date(booking.createdAt), 'dd.MM.yyyy HH:mm')}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 [&>*:not(a)]:flex-1 sm:[&>*:not(a)]:flex-none">
                     <a
                       href={phoneLink(booking.clientPhone)}
                       aria-label={t('bookings.callClient')}

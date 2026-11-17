@@ -132,10 +132,10 @@ export default function RequestDetailPage() {
       </div>
 
       <RequestStatusPill status={r.status} label={pending ? t('requests.staffPending') : undefined} />
-      <h1 className="mt-3 text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink tabular">
+      <h1 className="mt-3 text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-ink tabular">
         {timeRange(r.startTime, r.endTime)}
       </h1>
-      <p className="mt-1 text-[15px] text-ink-2">
+      <p className="mt-1 text-[0.9375rem] text-ink-2">
         {dayLabel(r.date, t, i18n.language)}, {formatDate(r.date, i18n.language)} · {r.venueName}
       </p>
       {!pending && r.decidedAt && (
@@ -153,8 +153,8 @@ export default function RequestDetailPage() {
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[17px] font-semibold text-ink">{r.clientName}</div>
-              <div className="text-[15px] text-ink-2 tabular">{formatPhone(r.clientPhone)}</div>
+              <div className="truncate text-[1.0625rem] font-semibold text-ink">{r.clientName}</div>
+              <div className="text-[0.9375rem] text-ink-2 tabular">{formatPhone(r.clientPhone)}</div>
             </div>
             <a href={phoneLink(r.clientPhone)} className={buttonClass('secondary', 'md', 'shrink-0')}>
               <Phone className="size-4" />

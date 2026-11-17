@@ -36,9 +36,9 @@ import type { Booking, PaymentStatus, Venue } from '../../types'
 type ViewMode = 'table' | 'calendar'
 
 const cellTone: Record<PaymentStatus, string> = {
-  FullyPaid: 'bg-paid-soft hover:bg-[#d3edda]',
-  Prepaid: 'bg-pre-soft hover:bg-[#fae6b8]',
-  Unpaid: 'bg-due-soft hover:bg-[#fadad8]',
+  FullyPaid: 'bg-paid-soft hover:bg-[#143020]',
+  Prepaid: 'bg-pre-soft hover:bg-[#382a14]',
+  Unpaid: 'bg-due-soft hover:bg-[#3a1a1e]',
 }
 
 function BookingSheet({ booking, onClose }: { booking: Booking; onClose: () => void }) {
@@ -118,7 +118,7 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
               {venues.map((v) => (
                 <th
                   key={v.id}
-                  className="sticky top-0 z-10 min-w-[148px] border-b border-line bg-surface px-1.5 py-2.5 text-left text-[13px] font-semibold text-ink"
+                  className="sticky top-0 z-10 min-w-[9.25rem] border-b border-line bg-surface px-1.5 py-2.5 text-left text-[0.8125rem] font-semibold text-ink"
                 >
                   <span className="block truncate">{v.name}</span>
                 </th>
@@ -130,7 +130,7 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
               const past = new Date(`${date}T${String(hour).padStart(2, '0')}:00:00`).getTime() < now
               return (
                 <tr key={hour}>
-                  <td className="sticky left-0 z-10 bg-surface py-1 pr-2 pl-4 align-middle text-[13px] font-semibold text-ink-2 tabular sm:pl-0">
+                  <td className="sticky left-0 z-10 bg-surface py-1 pr-2 pl-4 align-middle text-[0.8125rem] font-semibold text-ink-2 tabular sm:pl-0">
                     {hourLabel(hour)}
                   </td>
                   {venues.map((v) => {
@@ -161,7 +161,7 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
                             className="hatch flex h-11 w-full items-center gap-2 rounded-lg border border-wait-line px-2.5 text-left text-wait transition-colors duration-150 hover:border-wait-dot"
                           >
                             <Hourglass className="size-3.5 shrink-0" />
-                            <span className="truncate text-[13px] font-semibold">{booking.clientName}</span>
+                            <span className="truncate text-[0.8125rem] font-semibold">{booking.clientName}</span>
                           </button>
                         ) : booking ? (
                           <button
@@ -170,7 +170,7 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
                             className={`flex h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left transition-colors duration-150 ${cellTone[booking.paymentStatus]}`}
                           >
                             <span className={`size-1.5 shrink-0 rounded-full ${paymentDotClass(booking.paymentStatus)}`} />
-                            <span className="truncate text-[13px] font-semibold text-ink">{booking.clientName}</span>
+                            <span className="truncate text-[0.8125rem] font-semibold text-ink">{booking.clientName}</span>
                           </button>
                         ) : past ? (
                           <div className="h-11 rounded-lg border border-dashed border-line" />
@@ -179,7 +179,7 @@ function TableView({ date, venues }: { date: string; venues: Venue[] }) {
                             type="button"
                             aria-label={`${v.name}, ${hourLabel(hour)} — ${t('bookings.book')}`}
                             onClick={() => navigate(`/bookings/new?venueId=${v.id}&date=${date}&hour=${hour}`)}
-                            className="group flex h-11 w-full items-center justify-center rounded-lg border border-dashed border-line-strong text-ink-3 transition-colors duration-150 hover:border-brand hover:bg-brand-soft hover:text-brand"
+                            className="group flex h-11 w-full items-center justify-center rounded-lg border border-dashed border-line-strong text-ink-3 transition-colors duration-150 hover:border-brand hover:bg-brand-soft hover:text-accent"
                           >
                             <Plus className="size-4 opacity-60 group-hover:opacity-100" />
                           </button>
@@ -292,8 +292,8 @@ function CalendarView({ venues, selectedVenueId }: { venues: Venue[]; selectedVe
                 {format(day, 'd')}
               </span>
               <span
-                className={`h-4 min-w-4 rounded-full px-1 text-[11px] font-bold leading-4 tabular ${
-                  count ? 'bg-ink text-white' : 'text-transparent'
+                className={`h-4 min-w-4 rounded-full px-1 text-[0.6875rem] font-bold leading-4 tabular ${
+                  count ? 'bg-accent text-neon-ink' : 'text-transparent'
                 }`}
               >
                 {count || 0}
@@ -318,19 +318,19 @@ function CalendarView({ venues, selectedVenueId }: { venues: Venue[]; selectedVe
                 .map((b) => (
                   <li key={b.id} className="rounded-xl bg-sunken px-3.5 py-3">
                     <div className="flex items-center gap-3">
-                      <span className="w-[86px] shrink-0 text-sm font-semibold text-ink tabular">
+                      <span className="w-[5.375rem] shrink-0 text-sm font-semibold text-ink tabular">
                         {hhmm(b.startTime)}–{hhmm(b.endTime)}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{b.clientName}</span>
                       <PaymentBadge status={b.paymentStatus} />
                     </div>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 pl-0 text-sm sm:pl-[98px]">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 pl-0 text-sm sm:pl-[6.125rem]">
                       {!selectedVenueId && <span className="text-ink-3">{b.venueName}</span>}
-                      <a href={phoneLink(b.clientPhone)} className="text-brand tabular hover:underline">
+                      <a href={phoneLink(b.clientPhone)} className="text-accent tabular hover:underline">
                         {b.clientPhone}
                       </a>
                     </div>
-                    <MoneyLine booking={b} className="mt-2 sm:pl-[98px]" />
+                    <MoneyLine booking={b} className="mt-2 sm:pl-[6.125rem]" />
                   </li>
                 ))}
             </ul>
@@ -379,7 +379,7 @@ export default function AdminSchedulePage() {
       />
 
       {isLoading ? (
-        <Skeleton className="h-[520px] rounded-2xl" />
+        <Skeleton className="h-[32.5rem] rounded-2xl" />
       ) : !venues.length ? (
         <Card>
           <EmptyState icon={<Warehouse className="size-6" />} title={t('venues.noVenues')} text={t('venues.noVenuesHint')} />
