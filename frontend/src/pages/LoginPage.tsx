@@ -67,7 +67,7 @@ export default function LoginPage() {
             <p className="mt-4 text-base text-ink-3">{t('auth.staffTaglineSub')}</p>
           </div>
 
-          <div className="mx-auto my-10 w-full max-w-md rounded-2xl border border-white/10 bg-raised/60 p-6 shadow-float backdrop-blur-xl backdrop-saturate-150 sm:p-8 lg:mx-0 lg:ml-16">
+          <div className="mx-auto my-10 w-full max-w-md rounded-2xl border border-line bg-raised/60 p-6 shadow-float backdrop-blur-xl backdrop-saturate-150 sm:p-8 lg:mx-0 lg:ml-16">
             <LogoMark className="mb-6 size-14" />
             <h1 className="text-2xl font-semibold tracking-tight">{t('auth.staffTitle')}</h1>
             <p className="mt-1.5 text-sm text-ink-3">{t('auth.staffSub')}</p>
@@ -118,7 +118,7 @@ export default function LoginPage() {
               </div>
 
               {failed && (
-                <p role="alert" className="rounded-xl bg-due/20 px-3.5 py-2.5 text-sm font-medium text-[#ffb4b8] ring-1 ring-due/50">
+                <p role="alert" className="rounded-xl bg-due/20 px-3.5 py-2.5 text-sm font-medium text-due-ink ring-1 ring-due/50">
                   {t('auth.loginError')}
                 </p>
               )}

@@ -46,6 +46,8 @@ export default {
     adminUsers: 'Пользователи',
     adminSchedule: 'Расписание',
     switchLang: 'Сменить язык',
+    lightTheme: 'Светлая тема',
+    darkTheme: 'Тёмная тема',
     main: 'Основная навигация',
     short: {
       requests: 'Заявки',

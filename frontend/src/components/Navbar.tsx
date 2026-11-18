@@ -19,6 +19,7 @@ import { getPendingCount } from '../api/bookingRequests'
 import { useRequestTokens } from '../utils/guestRequests'
 import Logo from './Logo'
 import LangMenu from './LangMenu'
+import ThemeToggle from './ThemeToggle'
 
 interface NavItem {
   to: string
@@ -79,14 +80,14 @@ export function PublicHeader() {
   const { t } = useTranslation()
   const tokens = useRequestTokens()
   const link = ({ isActive }: { isActive: boolean }) =>
-    `transition-colors duration-150 ${isActive ? 'text-white' : 'text-white/60 hover:text-white'}`
+    `transition-colors duration-150 ${isActive ? 'text-ink' : 'text-ink-3 hover:text-ink'}`
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-ground/80 text-white backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-line bg-ground/80 text-ink backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl 2xl:max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-9">
           <Link to="/" aria-label="Futsal" className="flex items-center">
-            <Logo dark />
+            <Logo />
           </Link>
           <nav aria-label={t('nav.main')} className="hidden items-center gap-6 text-sm font-medium sm:flex">
             <NavLink to="/venues" className={link}>
@@ -104,12 +105,13 @@ export function PublicHeader() {
             <Link
               to="/my-requests"
               aria-label={t('nav.myRequests')}
-              className="inline-flex size-9 items-center justify-center rounded-lg text-white/75 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+              className="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-sunken hover:text-ink sm:hidden"
             >
               <Ticket className="size-4.5" />
             </Link>
           )}
-          <LangMenu dark />
+          <ThemeToggle />
+          <LangMenu />
           <Link
             to="/login"
             className="inline-flex h-9 items-center gap-1.5 rounded-[10px] px-3 text-sm font-medium text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
@@ -173,7 +175,10 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="space-y-3 border-t border-line p-4">
-        <LangMenu placement="up" />
+        <div className="flex items-center gap-1">
+          <LangMenu placement="up" />
+          <ThemeToggle />
+        </div>
         {loggedIn ? (
           <div className="flex items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sunken text-sm font-semibold text-ink-2">
@@ -232,6 +237,7 @@ export function TopBar() {
               <span className="hidden sm:inline">{t('nav.myRequests')}</span>
             </Link>
           )}
+          <ThemeToggle />
           <LangMenu />
           {loggedIn ? (
             <button

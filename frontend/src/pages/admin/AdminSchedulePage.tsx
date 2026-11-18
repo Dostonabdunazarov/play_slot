@@ -36,9 +36,9 @@ import type { Booking, PaymentStatus, Venue } from '../../types'
 type ViewMode = 'table' | 'calendar'
 
 const cellTone: Record<PaymentStatus, string> = {
-  FullyPaid: 'bg-paid-soft hover:bg-[#143020]',
-  Prepaid: 'bg-pre-soft hover:bg-[#382a14]',
-  Unpaid: 'bg-due-soft hover:bg-[#3a1a1e]',
+  FullyPaid: 'bg-paid-soft hover:bg-paid-soft-hover',
+  Prepaid: 'bg-pre-soft hover:bg-pre-soft-hover',
+  Unpaid: 'bg-due-soft hover:bg-due-soft-hover',
 }
 
 function BookingSheet({ booking, onClose }: { booking: Booking; onClose: () => void }) {

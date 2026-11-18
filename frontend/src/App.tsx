@@ -34,15 +34,16 @@ export default function App() {
           duration: 3000,
           style: {
             borderRadius: '14px',
-            background: '#12181f',
-            color: '#f1f5f9',
-            border: '1px solid #273040',
+            background: 'var(--color-raised)',
+            color: 'var(--color-ink)',
+            border: '1px solid var(--color-line-strong)',
+            boxShadow: 'var(--shadow-float)',
             fontSize: '0.875rem',
             fontWeight: 500,
             padding: '0.625rem 0.875rem',
           },
-          success: { iconTheme: { primary: '#4ade80', secondary: '#12181f' } },
-          error: { iconTheme: { primary: '#f87171', secondary: '#12181f' } },
+          success: { iconTheme: { primary: 'var(--color-paid)', secondary: 'var(--color-raised)' } },
+          error: { iconTheme: { primary: 'var(--color-due)', secondary: 'var(--color-raised)' } },
         }}
       />
       <BrowserRouter>

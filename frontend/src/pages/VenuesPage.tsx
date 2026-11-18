@@ -75,7 +75,7 @@ function VenueCard({
       <Link to={`/venues/${venue.id}?date=${date}`} className="block">
         <div className="relative h-56 overflow-hidden sm:h-64">
           <VenuePhoto venue={venue} />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-scrim via-scrim/40 to-transparent" />
           <span className="absolute top-3 left-3 rounded-full bg-black/55 px-3 py-1 text-[0.8125rem] font-bold text-white tabular backdrop-blur-sm">
             {formatMoney(venue.pricePerHour)} <span className="font-medium text-white/70">{t('venues.pricePerHour')}</span>
           </span>

@@ -46,6 +46,8 @@ export default {
     adminUsers: 'Foydalanuvchilar',
     adminSchedule: 'Jadval',
     switchLang: "Tilni o'zgartirish",
+    lightTheme: 'Yorug‘ mavzu',
+    darkTheme: 'Qorong‘i mavzu',
     main: 'Asosiy navigatsiya',
     short: {
       requests: 'Arizalar',
